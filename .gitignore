@@ -1,5 +1,7 @@
 *.iml
 .gradle
+cardvault.keystore
+CardVault-v1.0.apk
 /local.properties
 /.idea
 .DS_Store

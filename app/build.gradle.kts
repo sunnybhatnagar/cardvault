@@ -21,6 +21,24 @@ android {
         }
     }
 
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("arm64-v8a", "armeabi-v7a", "x86_64")
+            isUniversalApk = true
+        }
+    }
+
+    signingConfigs {
+        create("release") {
+            storeFile = file("../cardvault.keystore")
+            storePassword = "cardvault"
+            keyAlias = "cardvault"
+            keyPassword = "cardvault"
+        }
+    }
+
     buildTypes {
         debug {
             isMinifyEnabled = false
@@ -28,6 +46,7 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -81,7 +100,7 @@ dependencies {
     implementation(libs.androidx.biometric)
     implementation("androidx.fragment:fragment-ktx:1.6.2")
     implementation("io.coil-kt:coil-compose:2.6.0")
-    implementation("com.google.mlkit:text-recognition:16.0.0")
+    implementation("com.google.android.gms:play-services-mlkit-text-recognition:19.0.0")
     implementation("com.google.android.gms:play-services-auth:21.1.0")
     implementation("com.google.api-client:google-api-client-android:2.2.0")
     implementation("com.google.apis:google-api-services-drive:v3-rev20230815-2.0.0")
