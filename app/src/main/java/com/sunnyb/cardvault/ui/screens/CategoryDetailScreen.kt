@@ -47,9 +47,9 @@ fun CategoryDetailScreen(
     if (showDeleteConfirm) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = false },
-            containerColor = DarkSurface,
-            titleContentColor = TextPrimary,
-            textContentColor = TextSecondary,
+            containerColor = MaterialTheme.colorScheme.surface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
             title = { Text("Delete Category") },
             text = { Text("Cards in this category will be uncategorized. Continue?") },
             confirmButton = {
@@ -57,10 +57,10 @@ fun CategoryDetailScreen(
                     viewModel.deleteCategory()
                     showDeleteConfirm = false
                     onBack()
-                }) { Text("Delete", color = NeonMagenta) }
+                }) { Text("Delete", color = MaterialTheme.colorScheme.secondary) }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancel", color = TextSecondary) }
+                TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant) }
             }
         )
     }
@@ -75,17 +75,17 @@ fun CategoryDetailScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = DarkBackground,
-                    titleContentColor = TextPrimary,
-                    navigationIconContentColor = TextPrimary
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
         },
-        containerColor = DarkBackground
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         if (category == null) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = NeonCyan)
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
             return@Scaffold
         }
@@ -123,7 +123,7 @@ fun CategoryDetailScreen(
                         viewModel.updateCategory(category!!.copy(name = editName, icon = editIcon))
                         isEditing = false
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = NeonCyan.copy(alpha = 0.15f), contentColor = NeonCyan),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f), contentColor = MaterialTheme.colorScheme.primary),
                     shape = RoundedCornerShape(12.dp),
                     enabled = editName.isNotBlank()
                 ) { Text("💾 Save") }
@@ -131,8 +131,8 @@ fun CategoryDetailScreen(
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(text = category!!.icon ?: "📁", fontSize = 40.sp)
                     Column {
-                        Text(category!!.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = TextPrimary)
-                        Text("${cards.size} cards", style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
+                        Text(category!!.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                        Text("${cards.size} cards", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
                 Spacer(Modifier.height(8.dp))
@@ -142,27 +142,27 @@ fun CategoryDetailScreen(
                     isEditing = true
                 }) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp), tint = NeonCyan)
+                        Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
                         Spacer(Modifier.width(4.dp))
-                        Text("Edit", color = NeonCyan)
+                        Text("Edit", color = MaterialTheme.colorScheme.primary)
                     }
                 }
             }
 
             Spacer(Modifier.height(24.dp))
 
-            Text("Cards", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = TextPrimary)
+            Text("Cards", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
             Spacer(Modifier.height(12.dp))
 
             if (cards.isEmpty()) {
                 Box(Modifier.fillMaxWidth().padding(vertical = 32.dp), contentAlignment = Alignment.Center) {
-                    Text("No cards in this category", color = TextMuted)
+                    Text("No cards in this category", color = MaterialTheme.colorScheme.outline)
                 }
             } else {
                 cards.forEach { card ->
                     Card(
                         modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp).clickable { onCardClick(card.id) },
-                        colors = CardDefaults.cardColors(containerColor = DarkSurface),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Row(
@@ -171,12 +171,12 @@ fun CategoryDetailScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column {
-                                Text(card.nickname, fontWeight = FontWeight.Medium, color = TextPrimary)
+                                Text(card.nickname, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
                                 if (card.issuer != null) {
-                                    Text(card.issuer, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                                    Text(card.issuer, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                             }
-                            Text("•••• ${card.cardNumber.takeLast(4)}", color = TextMuted, style = MaterialTheme.typography.bodySmall)
+                            Text("•••• ${card.cardNumber.takeLast(4)}", color = MaterialTheme.colorScheme.outline, style = MaterialTheme.typography.bodySmall)
                         }
                     }
                 }
@@ -187,10 +187,10 @@ fun CategoryDetailScreen(
             Button(
                 onClick = { showDeleteConfirm = true },
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = NeonMagenta.copy(alpha = 0.15f), contentColor = NeonMagenta),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f), contentColor = MaterialTheme.colorScheme.secondary),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(18.dp), tint = NeonMagenta)
+                Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.secondary)
                 Spacer(Modifier.width(6.dp))
                 Text("Delete Category")
             }
@@ -199,13 +199,13 @@ fun CategoryDetailScreen(
 }
 
 @Composable private fun fieldColors() = OutlinedTextFieldDefaults.colors(
-    focusedBorderColor = NeonCyan.copy(alpha = 0.3f),
-    unfocusedBorderColor = TextMuted.copy(alpha = 0.2f),
-    focusedContainerColor = DarkSurface,
-    unfocusedContainerColor = DarkSurface,
-    cursorColor = NeonCyan,
-    focusedTextColor = TextPrimary,
-    unfocusedTextColor = TextPrimary,
-    focusedLabelColor = NeonCyan,
-    unfocusedLabelColor = TextSecondary
+    focusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+    focusedContainerColor = MaterialTheme.colorScheme.surface,
+    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+    cursorColor = MaterialTheme.colorScheme.primary,
+    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+    focusedLabelColor = MaterialTheme.colorScheme.primary,
+    unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
 )

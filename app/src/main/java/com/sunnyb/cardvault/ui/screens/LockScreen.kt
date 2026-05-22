@@ -40,7 +40,7 @@ fun LockScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(DarkBackground)
+            .background(MaterialTheme.colorScheme.background)
             .clickable(onClick = onUnlockClick),
         contentAlignment = Alignment.Center
     ) {
@@ -51,7 +51,7 @@ fun LockScreen(
             Text(
                 text = "◈",
                 fontSize = 52.sp,
-                color = NeonCyan,
+                color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.alpha(0.8f)
             )
             Spacer(Modifier.height(8.dp))
@@ -59,13 +59,13 @@ fun LockScreen(
                 text = "Card Vault",
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
-                color = NeonCyan,
+                color = MaterialTheme.colorScheme.primary,
                 textAlign = TextAlign.Center
             )
             Text(
                 text = "encrypted · private · yours",
                 style = MaterialTheme.typography.bodyMedium,
-                color = TextSecondary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
             Spacer(Modifier.height(40.dp))
@@ -73,13 +73,13 @@ fun LockScreen(
                 modifier = Modifier
                     .size(64.dp)
                     .clip(CircleShape)
-                    .background(NeonCyan.copy(alpha = 0.1f)),
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Default.Lock,
                     contentDescription = "Locked",
-                    tint = TextPrimary,
+                    tint = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.size(28.dp).alpha(alpha)
                 )
             }
@@ -87,7 +87,7 @@ fun LockScreen(
             Text(
                 text = "Touch to unlock",
                 style = MaterialTheme.typography.bodyMedium,
-                color = TextSecondary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.alpha(alpha)
             )
         }

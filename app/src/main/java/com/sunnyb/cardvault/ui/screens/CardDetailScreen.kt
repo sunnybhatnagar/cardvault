@@ -66,9 +66,9 @@ fun CardDetailScreen(
     if (showDeleteConfirm) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = false },
-            containerColor = DarkSurface,
-            titleContentColor = TextPrimary,
-            textContentColor = TextSecondary,
+            containerColor = MaterialTheme.colorScheme.surface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
             title = { Text("Delete Card") },
             text = { Text("This cannot be undone. Delete ${card?.nickname ?: "this card"}?") },
             confirmButton = {
@@ -76,10 +76,10 @@ fun CardDetailScreen(
                     showDeleteConfirm = false
                     viewModel.deleteCard()
                     onBack()
-                }) { Text("Delete", color = NeonMagenta) }
+                }) { Text("Delete", color = MaterialTheme.colorScheme.secondary) }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancel", color = TextSecondary) }
+                TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant) }
             }
         )
     }
@@ -99,13 +99,13 @@ fun CardDetailScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = DarkBackground,
-                    titleContentColor = TextPrimary,
-                    navigationIconContentColor = TextPrimary
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
         },
-        containerColor = DarkBackground
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         if (card == null) {
             Box(
@@ -114,7 +114,7 @@ fun CardDetailScreen(
                     .padding(padding),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(color = NeonCyan)
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
             return@Scaffold
         }
@@ -152,7 +152,7 @@ fun CardDetailScreen(
                         modifier = Modifier
                             .fillMaxSize()
                             .clip(RoundedCornerShape(16.dp))
-                            .background(DarkSurface)
+                            .background(MaterialTheme.colorScheme.surface)
                             .graphicsLayer { rotationY = 180f - flipRotation },
                         contentAlignment = Alignment.Center
                     ) {
@@ -166,7 +166,7 @@ fun CardDetailScreen(
                         } else {
                             Text(
                                 text = if (card!!.backImagePath != null) "Loading..." else "No back image",
-                                color = TextSecondary
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -179,7 +179,7 @@ fun CardDetailScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
-                        color = DarkSurface,
+                        color = MaterialTheme.colorScheme.surface,
                         shape = RoundedCornerShape(16.dp)
                     )
                     .padding(16.dp)
@@ -192,10 +192,10 @@ fun CardDetailScreen(
                     onToggle = { showCardNumber = !showCardNumber }
                 )
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp),
-                    color = TextMuted.copy(alpha = 0.2f))
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
                 InfoRow("Expiry", card!!.expiry)
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp),
-                    color = TextMuted.copy(alpha = 0.2f))
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
                 DetailRowWithToggle(
                     label = "CVV",
                     masked = "•••",
@@ -204,7 +204,7 @@ fun CardDetailScreen(
                     onToggle = { showCvv = !showCvv }
                 )
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp),
-                    color = TextMuted.copy(alpha = 0.2f))
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
                 InfoRow("Category", categoryName ?: "None")
             }
 
@@ -218,10 +218,10 @@ fun CardDetailScreen(
                     onClick = { onEdit(card!!.id) },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = NeonCyan
+                        contentColor = MaterialTheme.colorScheme.primary
                     ),
                     border = ButtonDefaults.outlinedButtonBorder.copy(
-                        brush = androidx.compose.ui.graphics.SolidColor(NeonCyan.copy(alpha = 0.3f))
+                        brush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
                     ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
@@ -234,8 +234,8 @@ fun CardDetailScreen(
                     onClick = { showDeleteConfirm = true },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = NeonMagenta.copy(alpha = 0.15f),
-                        contentColor = NeonMagenta
+                        containerColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f),
+                        contentColor = MaterialTheme.colorScheme.secondary
                     ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
@@ -264,20 +264,20 @@ private fun DetailRowWithToggle(
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodyMedium,
-                color = TextSecondary
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
                 text = if (showValue) revealed else masked,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
-                color = TextPrimary
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
         IconButton(onClick = onToggle) {
             Icon(
                 imageVector = if (showValue) Icons.Default.VisibilityOff else Icons.Default.Visibility,
                 contentDescription = if (showValue) "Hide" else "Show",
-                tint = TextSecondary
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -293,13 +293,13 @@ private fun InfoRow(label: String, value: String) {
         Text(
             text = label,
             style = MaterialTheme.typography.bodyMedium,
-            color = TextSecondary
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
             text = value,
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium,
-            color = TextPrimary
+            color = MaterialTheme.colorScheme.onSurface
         )
     }
 }

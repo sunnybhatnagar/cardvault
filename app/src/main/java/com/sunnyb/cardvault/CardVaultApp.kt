@@ -1,12 +1,16 @@
 package com.sunnyb.cardvault
 
 import android.app.Application
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import com.sunnyb.cardvault.data.db.AppDatabase
 import com.sunnyb.cardvault.data.db.DatabaseFactory
 import com.sunnyb.cardvault.data.repository.CardRepository
 import com.sunnyb.cardvault.data.repository.CategoryRepository
 import com.sunnyb.cardvault.security.EncryptionManager
 import com.sunnyb.cardvault.security.SessionManager
+import com.sunnyb.cardvault.ui.theme.ThemeMode
 import com.sunnyb.cardvault.util.NotificationHelper
 import com.sunnyb.cardvault.util.RootDetector
 import com.sunnyb.cardvault.util.SafeLoggingTree
@@ -20,6 +24,7 @@ class CardVaultApp : Application() {
     lateinit var cardRepository: CardRepository
     lateinit var categoryRepository: CategoryRepository
     lateinit var sessionManager: SessionManager
+    var themeMode by mutableStateOf(ThemeMode.DARK)
     var isDeviceRooted: Boolean = false
         private set
     private var _initialized = false
@@ -31,6 +36,10 @@ class CardVaultApp : Application() {
         encryptionManager = EncryptionManager(this)
         sessionManager = SessionManager(this)
         NotificationHelper.createChannel(this)
+
+        val saved = getSharedPreferences("cardvault_theme", MODE_PRIVATE)
+            .getString("theme_mode", "DARK") ?: "DARK"
+        themeMode = ThemeMode.valueOf(saved)
 
         isDeviceRooted = RootDetector.isRooted(this)
         if (isDeviceRooted) Timber.w("Device is rooted — running with reduced security guarantees")

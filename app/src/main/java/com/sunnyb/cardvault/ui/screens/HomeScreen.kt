@@ -37,7 +37,7 @@ fun HomeScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(DarkBackground)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         OutlinedTextField(
             value = searchQuery,
@@ -45,20 +45,20 @@ fun HomeScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp, 12.dp),
-            placeholder = { Text("Search cards...", color = TextMuted) },
+            placeholder = { Text("Search cards...", color = MaterialTheme.colorScheme.outline) },
             leadingIcon = {
                 Icon(Icons.Default.Search, contentDescription = "Search",
-                    tint = TextSecondary)
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant)
             },
             singleLine = true,
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = NeonCyan.copy(alpha = 0.3f),
-                unfocusedBorderColor = TextMuted.copy(alpha = 0.2f),
-                focusedContainerColor = DarkSurface,
-                unfocusedContainerColor = DarkSurface,
-                cursorColor = NeonCyan,
-                focusedTextColor = TextPrimary,
-                unfocusedTextColor = TextPrimary
+                focusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                cursorColor = MaterialTheme.colorScheme.primary,
+                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                unfocusedTextColor = MaterialTheme.colorScheme.onSurface
             ),
             shape = RoundedCornerShape(12.dp)
         )
@@ -70,13 +70,24 @@ fun HomeScreen(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(Icons.Default.CreditCard, contentDescription = null,
-                        modifier = Modifier.size(48.dp), tint = TextMuted)
+                        modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.outline)
                     Spacer(Modifier.height(16.dp))
                     Text("No cards yet", style = MaterialTheme.typography.titleMedium,
-                        color = TextPrimary, fontWeight = FontWeight.SemiBold)
+                        color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold)
                     Spacer(Modifier.height(8.dp))
-                    Text("Tap + to add your first card",
-                        style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
+                    Text("Tap the button below to add your first card",
+                        style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.height(20.dp))
+                    OutlinedButton(
+                        onClick = onAddCard,
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
+                        border = ButtonDefaults.outlinedButtonBorder.copy(
+                            brush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text("+ Add Card")
+                    }
                 }
             }
         } else if (cards.isEmpty() && searchQuery.isNotBlank()) {
@@ -86,7 +97,7 @@ fun HomeScreen(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("No cards match \"$searchQuery\"",
-                        style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
+                        style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         } else {
@@ -112,7 +123,7 @@ fun HomeScreen(
                             .clip(RoundedCornerShape(16.dp))
                             .border(
                                 width = 2.dp,
-                                color = TextMuted.copy(alpha = 0.3f),
+                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
                                 shape = RoundedCornerShape(16.dp)
                             )
                             .clickable(onClick = onAddCard),
@@ -122,12 +133,12 @@ fun HomeScreen(
                             Text(
                                 text = "+",
                                 fontSize = 32.sp,
-                                color = TextMuted
+                                color = MaterialTheme.colorScheme.outline
                             )
                             Text(
                                 text = "Add Card",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = TextMuted
+                                color = MaterialTheme.colorScheme.outline
                             )
                         }
                     }

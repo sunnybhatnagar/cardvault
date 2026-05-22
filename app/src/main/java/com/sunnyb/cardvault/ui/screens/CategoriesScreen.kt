@@ -4,6 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
@@ -32,9 +34,9 @@ fun CategoriesScreen(
     if (showAddDialog) {
         AlertDialog(
             onDismissRequest = { showAddDialog = false },
-            containerColor = DarkSurface,
-            titleContentColor = TextPrimary,
-            textContentColor = TextSecondary,
+            containerColor = MaterialTheme.colorScheme.surface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
             title = { Text("Add Category") },
             text = {
                 Column {
@@ -70,10 +72,10 @@ fun CategoriesScreen(
                         }
                     },
                     enabled = newName.isNotBlank()
-                ) { Text("Add", color = NeonCyan) }
+                ) { Text("Add", color = MaterialTheme.colorScheme.primary) }
             },
             dismissButton = {
-                TextButton(onClick = { showAddDialog = false }) { Text("Cancel", color = TextSecondary) }
+                TextButton(onClick = { showAddDialog = false }) { Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant) }
             }
         )
     }
@@ -81,14 +83,15 @@ fun CategoriesScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(DarkBackground)
+            .background(MaterialTheme.colorScheme.background)
             .padding(16.dp)
+            .verticalScroll(rememberScrollState())
     ) {
         Text(
             text = "Categories",
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
-            color = TextPrimary
+            color = MaterialTheme.colorScheme.onSurface
         )
 
         Spacer(Modifier.height(20.dp))
@@ -103,10 +106,10 @@ fun CategoriesScreen(
                     Spacer(Modifier.height(12.dp))
                     Text("No categories yet",
                         style = MaterialTheme.typography.titleMedium,
-                        color = TextPrimary, fontWeight = FontWeight.SemiBold)
+                        color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold)
                     Spacer(Modifier.height(4.dp))
                     Text("Tap + to create one",
-                        style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
+                        style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         } else {
@@ -116,7 +119,7 @@ fun CategoriesScreen(
                         .fillMaxWidth()
                         .padding(bottom = 12.dp)
                         .clip(RoundedCornerShape(16.dp))
-                        .background(DarkSurface)
+                        .background(MaterialTheme.colorScheme.surface)
                         .clickable { onCategoryClick(cat.category.id) }
                         .padding(16.dp)
                 ) {
@@ -134,17 +137,17 @@ fun CategoriesScreen(
                                 text = cat.category.name,
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold,
-                                color = TextPrimary
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                         }
                         Surface(
                             shape = RoundedCornerShape(20.dp),
-                            color = NeonCyan.copy(alpha = 0.12f)
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
                         ) {
                             Text(
                                 text = "${cat.cardCount} cards",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = NeonCyan,
+                                color = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
                             )
                         }
@@ -159,7 +162,7 @@ fun CategoriesScreen(
                 .clip(RoundedCornerShape(16.dp))
                 .border(
                     width = 1.dp,
-                    color = TextMuted.copy(alpha = 0.2f),
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
                     shape = RoundedCornerShape(16.dp)
                 )
                 .clickable { showAddDialog = true }
@@ -170,21 +173,21 @@ fun CategoriesScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("+", color = TextMuted, fontSize = 20.sp)
-                Text("Add Category", color = TextMuted)
+                Text("+", color = MaterialTheme.colorScheme.outline, fontSize = 20.sp)
+                Text("Add Category", color = MaterialTheme.colorScheme.outline)
             }
         }
     }
 }
 
 @Composable private fun fieldColors() = OutlinedTextFieldDefaults.colors(
-    focusedBorderColor = NeonCyan.copy(alpha = 0.3f),
-    unfocusedBorderColor = TextMuted.copy(alpha = 0.2f),
-    focusedContainerColor = DarkSurface,
-    unfocusedContainerColor = DarkSurface,
-    cursorColor = NeonCyan,
-    focusedTextColor = TextPrimary,
-    unfocusedTextColor = TextPrimary,
-    focusedLabelColor = NeonCyan,
-    unfocusedLabelColor = TextSecondary
+    focusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+    focusedContainerColor = MaterialTheme.colorScheme.surface,
+    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+    cursorColor = MaterialTheme.colorScheme.primary,
+    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+    focusedLabelColor = MaterialTheme.colorScheme.primary,
+    unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
 )

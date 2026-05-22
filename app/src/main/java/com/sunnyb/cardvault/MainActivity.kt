@@ -65,30 +65,12 @@ class MainActivity : FragmentActivity() {
         })
 
         setContent {
-            val themePrefs = getSharedPreferences("cardvault_theme", MODE_PRIVATE)
             val onboardingPrefs = getSharedPreferences("cardvault_onboarding", MODE_PRIVATE)
             var showOnboarding by remember {
                 mutableStateOf(!onboardingPrefs.getBoolean("done", false))
             }
-            var currentTheme by remember {
-                mutableStateOf(ThemeMode.valueOf(themePrefs.getString("theme_mode", "DARK") ?: "DARK"))
-            }
 
-            val themeChangeObserver = remember {
-                androidx.lifecycle.LifecycleEventObserver { _, event ->
-                    if (event == Lifecycle.Event.ON_RESUME) {
-                        val saved = ThemeMode.valueOf(themePrefs.getString("theme_mode", "DARK") ?: "DARK")
-                        if (saved != currentTheme) currentTheme = saved
-                    }
-                }
-            }
-
-            DisposableEffect(lifecycle) {
-                lifecycle.addObserver(themeChangeObserver)
-                onDispose { lifecycle.removeObserver(themeChangeObserver) }
-            }
-
-            CardVaultTheme(themeMode = currentTheme) {
+            CardVaultTheme(themeMode = app.themeMode) {
                 if (showOnboarding) {
                     OnboardingScreen(
                         onComplete = {

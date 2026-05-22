@@ -72,13 +72,13 @@ fun AddCardScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = DarkBackground,
-                    titleContentColor = TextPrimary,
-                    navigationIconContentColor = TextPrimary
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
         },
-        containerColor = DarkBackground
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Column(
             modifier = Modifier
@@ -92,7 +92,7 @@ fun AddCardScreen(
                     .fillMaxWidth()
                     .height(4.dp)
                     .clip(RoundedCornerShape(20.dp))
-                    .background(TextMuted.copy(alpha = 0.2f))
+                    .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
             ) {
                 Box(
                     modifier = Modifier
@@ -100,7 +100,7 @@ fun AddCardScreen(
                         .fillMaxWidth(fraction = state.step / 3f)
                         .background(
                             brush = Brush.horizontalGradient(
-                                listOf(NeonCyan, NeonMagenta)
+                                listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary)
                             ),
                             shape = RoundedCornerShape(20.dp)
                         )
@@ -153,10 +153,10 @@ fun AddCardScreen(
                         onClick = { viewModel.previousStep() },
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = TextSecondary
+                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
                         ),
                         border = ButtonDefaults.outlinedButtonBorder.copy(
-                            brush = androidx.compose.ui.graphics.SolidColor(TextMuted.copy(alpha = 0.3f))
+                            brush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
                         ),
                         shape = RoundedCornerShape(12.dp)
                     ) {
@@ -171,8 +171,8 @@ fun AddCardScreen(
                         onClick = { viewModel.nextStep() },
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = NeonCyan.copy(alpha = 0.1f),
-                            contentColor = NeonCyan
+                            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                            contentColor = MaterialTheme.colorScheme.primary
                         ),
                         shape = RoundedCornerShape(12.dp)
                     ) {
@@ -186,15 +186,15 @@ fun AddCardScreen(
                         },
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = NeonCyan.copy(alpha = 0.1f),
-                            contentColor = NeonCyan
+                            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                            contentColor = MaterialTheme.colorScheme.primary
                         ),
                         shape = RoundedCornerShape(12.dp),
                         enabled = state.nickname.isNotBlank() && state.cardNumber.isNotBlank() && state.cardNumberError == null
                     ) {
                         if (state.isSaving) {
                             CircularProgressIndicator(
-                                color = NeonCyan,
+                                color = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(20.dp),
                                 strokeWidth = 2.dp
                             )
@@ -217,8 +217,8 @@ fun AddCardScreen(
                             .size(8.dp)
                             .clip(RoundedCornerShape(50))
                             .background(
-                                if (i <= state.step) NeonCyan
-                                else TextMuted.copy(alpha = 0.2f)
+                                if (i <= state.step) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
                             )
                     )
                     if (i < 3) Spacer(Modifier.width(8.dp))
@@ -269,19 +269,19 @@ private fun StepPhotoCapture(
     if (showRationale) {
         AlertDialog(
             onDismissRequest = { showRationale = false },
-            containerColor = DarkSurface,
-            titleContentColor = TextPrimary,
-            textContentColor = TextSecondary,
+            containerColor = MaterialTheme.colorScheme.surface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
             title = { Text("Camera Permission") },
             text = { Text("Card Vault needs camera access to scan your credit card details. No photos are uploaded anywhere.") },
             confirmButton = {
                 TextButton(onClick = {
                     showRationale = false
                     permissionLauncher.launch(Manifest.permission.CAMERA)
-                }) { Text("Allow", color = NeonCyan) }
+                }) { Text("Allow", color = MaterialTheme.colorScheme.primary) }
             },
             dismissButton = {
-                TextButton(onClick = { showRationale = false }) { Text("Cancel", color = TextSecondary) }
+                TextButton(onClick = { showRationale = false }) { Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant) }
             }
         )
     }
@@ -289,9 +289,9 @@ private fun StepPhotoCapture(
     if (showSettingsPrompt) {
         AlertDialog(
             onDismissRequest = { showSettingsPrompt = false },
-            containerColor = DarkSurface,
-            titleContentColor = TextPrimary,
-            textContentColor = TextSecondary,
+            containerColor = MaterialTheme.colorScheme.surface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
             title = { Text("Camera Permission") },
             text = { Text("Camera permission was permanently denied. Enable it in Settings → Apps → Card Vault → Permissions.") },
             confirmButton = {
@@ -300,10 +300,10 @@ private fun StepPhotoCapture(
                     context.startActivity(android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
                         data = android.net.Uri.fromParts("package", context.packageName, null)
                     })
-                }) { Text("Open Settings", color = NeonCyan) }
+                }) { Text("Open Settings", color = MaterialTheme.colorScheme.primary) }
             },
             dismissButton = {
-                TextButton(onClick = { showSettingsPrompt = false }) { Text("Cancel", color = TextSecondary) }
+                TextButton(onClick = { showSettingsPrompt = false }) { Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant) }
             }
         )
     }
@@ -313,7 +313,7 @@ private fun StepPhotoCapture(
             text = title,
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.SemiBold,
-            color = TextPrimary
+            color = MaterialTheme.colorScheme.onSurface
         )
         Spacer(Modifier.height(16.dp))
 
@@ -324,10 +324,10 @@ private fun StepPhotoCapture(
                 .clip(RoundedCornerShape(16.dp))
                 .border(
                     width = 2.dp,
-                    color = NeonCyan.copy(alpha = 0.2f),
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
                     shape = RoundedCornerShape(16.dp)
                 )
-                .background(NeonCyan.copy(alpha = 0.02f))
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.02f))
                 .clickable {
                     val isGranted = ContextCompat.checkSelfPermission(
                         context, Manifest.permission.CAMERA
@@ -360,21 +360,21 @@ private fun StepPhotoCapture(
             } else if (hasExistingImage) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(Icons.Default.CameraAlt, contentDescription = null,
-                        modifier = Modifier.size(36.dp), tint = TextSecondary)
+                        modifier = Modifier.size(36.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(Modifier.height(8.dp))
                     Text(
                         text = "Photo saved (tap to retake)",
-                        color = TextSecondary
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             } else {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(Icons.Default.CameraAlt, contentDescription = null,
-                        modifier = Modifier.size(36.dp), tint = TextMuted)
+                        modifier = Modifier.size(36.dp), tint = MaterialTheme.colorScheme.outline)
                     Spacer(Modifier.height(8.dp))
                     Text(
                         text = "Tap to capture",
-                        color = TextSecondary
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -384,7 +384,7 @@ private fun StepPhotoCapture(
 
         Text(
             text = "— or import from gallery —",
-            color = TextMuted,
+            color = MaterialTheme.colorScheme.outline,
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
@@ -397,7 +397,7 @@ private fun StepPhotoCapture(
             onClick = onSkip,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         ) {
-            Text("Skip this step", color = TextSecondary)
+            Text("Skip this step", color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -424,7 +424,7 @@ private fun StepCardDetails(
             text = "Card Details",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.SemiBold,
-            color = TextPrimary
+            color = MaterialTheme.colorScheme.onSurface
         )
         Spacer(Modifier.height(16.dp))
 
@@ -441,7 +441,7 @@ private fun StepCardDetails(
 
         Spacer(Modifier.height(16.dp))
 
-        Text("Category", color = TextSecondary,
+        Text("Category", color = MaterialTheme.colorScheme.onSurfaceVariant,
             style = MaterialTheme.typography.bodyMedium)
         Spacer(Modifier.height(8.dp))
 
@@ -454,8 +454,8 @@ private fun StepCardDetails(
                     onClick = { onCategoryChange(category.id) },
                     label = { Text(category.name) },
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = NeonCyan.copy(alpha = 0.12f),
-                        selectedLabelColor = NeonCyan
+                        selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                        selectedLabelColor = MaterialTheme.colorScheme.primary
                     )
                 )
             }
@@ -481,21 +481,21 @@ private fun CardDetailField(
             .padding(vertical = 4.dp),
         singleLine = true,
         isError = error != null,
-        supportingText = error?.let { { Text(it, color = NeonMagenta) } },
+        supportingText = error?.let { { Text(it, color = MaterialTheme.colorScheme.secondary) } },
         visualTransformation = visualTransformation ?: androidx.compose.ui.text.input.VisualTransformation.None,
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = NeonCyan.copy(alpha = 0.3f),
-            unfocusedBorderColor = TextMuted.copy(alpha = 0.2f),
-            focusedContainerColor = DarkSurface,
-            unfocusedContainerColor = DarkSurface,
-            cursorColor = NeonCyan,
-            focusedTextColor = TextPrimary,
-            unfocusedTextColor = TextPrimary,
-            focusedLabelColor = NeonCyan,
-            unfocusedLabelColor = TextSecondary,
-            errorBorderColor = NeonMagenta.copy(alpha = 0.5f),
-            errorLabelColor = NeonMagenta
+            focusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+            focusedContainerColor = MaterialTheme.colorScheme.surface,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+            cursorColor = MaterialTheme.colorScheme.primary,
+            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+            focusedLabelColor = MaterialTheme.colorScheme.primary,
+            unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            errorBorderColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f),
+            errorLabelColor = MaterialTheme.colorScheme.secondary
         ),
         shape = RoundedCornerShape(12.dp)
     )

@@ -27,13 +27,13 @@ fun HelpScreen(onBack: () -> Unit) {
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = DarkBackground,
-                    titleContentColor = TextPrimary,
-                    navigationIconContentColor = TextPrimary
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
         },
-        containerColor = DarkBackground
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Column(
             modifier = Modifier
@@ -110,12 +110,12 @@ private fun Section(title: String, content: @Composable ColumnScope.() -> Unit) 
         text = title,
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.SemiBold,
-        color = NeonCyan,
+        color = MaterialTheme.colorScheme.primary,
         modifier = Modifier.padding(bottom = 8.dp)
     )
     Surface(
         shape = RoundedCornerShape(12.dp),
-        color = DarkSurface,
+        color = MaterialTheme.colorScheme.surface,
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(16.dp), content = content)
@@ -125,7 +125,7 @@ private fun Section(title: String, content: @Composable ColumnScope.() -> Unit) 
 @Composable
 private fun ColumnScope.Bullet(text: String) {
     Row(modifier = Modifier.padding(vertical = 3.dp)) {
-        Text("•  ", color = TextMuted)
-        Text(text, color = TextPrimary, style = MaterialTheme.typography.bodyMedium)
+        Text("•  ", color = MaterialTheme.colorScheme.outline)
+        Text(text, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.bodyMedium)
     }
 }
