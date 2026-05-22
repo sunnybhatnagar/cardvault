@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import android.util.LruCache
 
 class CardDetailViewModel(
     savedStateHandle: SavedStateHandle
@@ -31,11 +32,15 @@ class CardDetailViewModel(
     private val _backImageBitmap = MutableStateFlow<Bitmap?>(null)
     val backImageBitmap: StateFlow<Bitmap?> = _backImageBitmap.asStateFlow()
 
+<<<<<<< HEAD
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
     private val _isDeleted = MutableStateFlow(false)
     val isDeleted: StateFlow<Boolean> = _isDeleted.asStateFlow()
+=======
+    private val imageCache = LruCache<String, Bitmap>(10)
+>>>>>>> feat/image-cache-and-biometric
 
     init {
         loadCard()
@@ -59,8 +64,16 @@ class CardDetailViewModel(
     fun loadBackImage() {
         viewModelScope.launch {
             val path = _card.value?.backImagePath ?: return@launch
+            val cached = imageCache.get(path)
+            if (cached != null) {
+                _backImageBitmap.value = cached
+                return@launch
+            }
             val bitmap = withContext(Dispatchers.IO) {
                 encryptionManager.readEncryptedBitmap(path)
+            }
+            if (bitmap != null) {
+                imageCache.put(path, bitmap)
             }
             _backImageBitmap.value = bitmap
         }
