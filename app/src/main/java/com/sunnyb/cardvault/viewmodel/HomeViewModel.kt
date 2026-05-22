@@ -15,11 +15,19 @@ class HomeViewModel : ViewModel() {
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
+    private val _isLoading = MutableStateFlow(true)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
     @OptIn(ExperimentalCoroutinesApi::class)
     val cards: StateFlow<List<Card>> = _searchQuery
         .flatMapLatest { query ->
             if (query.isBlank()) repository.allCards
             else repository.searchCards(query)
+        }
+        .onEach { _isLoading.value = false }
+        .catch {
+            _isLoading.value = false
+            emit(emptyList())
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 

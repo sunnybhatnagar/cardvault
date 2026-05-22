@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sunnyb.cardvault.ui.components.CardTile
+import com.sunnyb.cardvault.ui.components.ShimmerCardTile
 import com.sunnyb.cardvault.ui.theme.*
 import com.sunnyb.cardvault.viewmodel.HomeViewModel
 
@@ -33,6 +34,7 @@ fun HomeScreen(
 ) {
     val cards by viewModel.cards.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
 
     Column(
         modifier = Modifier
@@ -63,7 +65,20 @@ fun HomeScreen(
             shape = RoundedCornerShape(12.dp)
         )
 
-        if (cards.isEmpty() && searchQuery.isBlank()) {
+        if (isLoading) {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                contentPadding = PaddingValues(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.weight(1f),
+                userScrollEnabled = false
+            ) {
+                items(6) {
+                    ShimmerCardTile()
+                }
+            }
+        } else if (cards.isEmpty() && searchQuery.isBlank()) {
             Box(
                 modifier = Modifier.weight(1f).fillMaxWidth(),
                 contentAlignment = Alignment.Center
