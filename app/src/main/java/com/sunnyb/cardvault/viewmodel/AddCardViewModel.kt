@@ -27,7 +27,8 @@ data class AddCardUiState(
     val cvv: String = "",
     val categoryId: Long? = null,
     val categories: List<Category> = emptyList(),
-    val isSaving: Boolean = false
+    val isSaving: Boolean = false,
+    val ocrFailed: Boolean = false
 )
 
 class AddCardViewModel : ViewModel() {
@@ -119,6 +120,9 @@ class AddCardViewModel : ViewModel() {
     private fun scanCardImage(uri: Uri) {
         viewModelScope.launch {
             val info = CardScanner.scan(appContext, uri)
+            val hasResult = info.cardNumber != null || info.expiry != null || info.issuer != null
+            _state.update { it.copy(ocrFailed = !hasResult) }
+
             info.cardNumber?.let { number ->
                 if (_state.value.cardNumber.isBlank()) {
                     _state.update { it.copy(cardNumber = number) }

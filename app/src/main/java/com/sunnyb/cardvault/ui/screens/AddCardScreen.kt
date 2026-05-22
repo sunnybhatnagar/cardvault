@@ -111,14 +111,14 @@ fun AddCardScreen(
 
             when (state.step) {
                 1 -> StepPhotoCapture(
-                    title = "📸 Front of Card",
+                    title = "Front of Card",
                     imageUri = state.frontImageUri,
                     hasExistingImage = state.hasExistingFrontImage,
                     onImageSelected = { viewModel.setFrontImage(it) },
                     onSkip = { viewModel.nextStep() }
                 )
                 2 -> StepPhotoCapture(
-                    title = "📸 Back of Card",
+                    title = "Back of Card",
                     imageUri = state.backImageUri,
                     hasExistingImage = state.hasExistingBackImage,
                     onImageSelected = { viewModel.setBackImage(it) },
@@ -140,6 +140,22 @@ fun AddCardScreen(
                     onCvvChange = { viewModel.updateCvv(it) },
                     onCategoryChange = { viewModel.updateCategory(it) }
                 )
+            }
+
+            if (state.ocrFailed && state.step < 3) {
+                Spacer(Modifier.height(8.dp))
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.error.copy(alpha = 0.1f),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Could not read card details from image. Try better lighting or enter details manually.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(12.dp)
+                    )
+                }
             }
 
             Spacer(Modifier.height(24.dp))
