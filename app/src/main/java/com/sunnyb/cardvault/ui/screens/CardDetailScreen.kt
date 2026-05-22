@@ -20,12 +20,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
-<<<<<<< HEAD
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
 import android.widget.Toast
-=======
->>>>>>> chore/security-audit
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity

@@ -32,15 +32,13 @@ class CardDetailViewModel(
     private val _backImageBitmap = MutableStateFlow<Bitmap?>(null)
     val backImageBitmap: StateFlow<Bitmap?> = _backImageBitmap.asStateFlow()
 
-<<<<<<< HEAD
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
     private val _isDeleted = MutableStateFlow(false)
     val isDeleted: StateFlow<Boolean> = _isDeleted.asStateFlow()
-=======
+
     private val imageCache = LruCache<String, Bitmap>(10)
->>>>>>> feat/image-cache-and-biometric
 
     init {
         loadCard()
