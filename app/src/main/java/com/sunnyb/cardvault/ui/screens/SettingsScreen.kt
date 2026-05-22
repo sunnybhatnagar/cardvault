@@ -506,6 +506,22 @@ fun SettingsScreen(
                 title = { Text("What's New") },
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("v1.2 — May 2026", fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary)
+                        Text("•  Grid/List view toggle on Home screen",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface)
+                        Text("•  Compact card row layout for list mode",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface)
+                        Text("•  Card count indicator in toggle area",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface)
+
+                        Spacer(Modifier.height(12.dp))
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                        Spacer(Modifier.height(8.dp))
+
                         Text("v1.1 — May 2026", fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary)
                         Text("•  Error handling and crash prevention improvements",
