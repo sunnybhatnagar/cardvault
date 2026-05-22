@@ -1,6 +1,7 @@
 package com.sunnyb.cardvault.ui.screens
 
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -76,7 +77,11 @@ fun AboutScreen(onBack: () -> Unit) {
             Text("Card Vault", style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
 
-            Text("Version 1.0", style = MaterialTheme.typography.bodyMedium,
+            val versionName = try {
+                context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.0"
+            } catch (e: PackageManager.NameNotFoundException) { "1.0" }
+
+            Text("Version $versionName", style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
 
             Spacer(Modifier.height(8.dp))
