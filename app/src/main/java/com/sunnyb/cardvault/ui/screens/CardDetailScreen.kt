@@ -17,7 +17,6 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import android.view.WindowManager
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
@@ -47,16 +46,6 @@ fun CardDetailScreen(
     var isFlipped by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
     val density = LocalDensity.current
-
-    val view = LocalView.current
-    DisposableEffect(Unit) {
-        view.setSystemUiVisibility(android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE)
-        val window = (view.context as? android.app.Activity)?.window
-        window?.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-        onDispose {
-            window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
-        }
-    }
 
     val flipRotation by animateFloatAsState(
         targetValue = if (isFlipped) 180f else 0f,

@@ -3,6 +3,7 @@ package com.sunnyb.cardvault
 import android.Manifest
 import android.os.Build
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -43,6 +44,8 @@ class MainActivity : FragmentActivity() {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
 
         val themePrefs = getSharedPreferences("cardvault_theme", MODE_PRIVATE)
 
