@@ -18,6 +18,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
 import com.sunnyb.cardvault.ui.theme.*
 import com.sunnyb.cardvault.viewmodel.CategoriesViewModel
 
@@ -27,9 +29,18 @@ fun CategoriesScreen(
     viewModel: CategoriesViewModel = viewModel()
 ) {
     val categories by viewModel.categories.collectAsState()
+    val error by viewModel.error.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
     var newName by remember { mutableStateOf("") }
     var newIcon by remember { mutableStateOf("📁") }
+    val context = LocalContext.current
+
+    LaunchedEffect(error) {
+        error?.let {
+            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+            viewModel.clearError()
+        }
+    }
 
     if (showAddDialog) {
         AlertDialog(

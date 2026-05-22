@@ -31,17 +31,27 @@ class CardDetailViewModel(
     private val _backImageBitmap = MutableStateFlow<Bitmap?>(null)
     val backImageBitmap: StateFlow<Bitmap?> = _backImageBitmap.asStateFlow()
 
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+
+    private val _isDeleted = MutableStateFlow(false)
+    val isDeleted: StateFlow<Boolean> = _isDeleted.asStateFlow()
+
     init {
         loadCard()
     }
 
     private fun loadCard() {
         viewModelScope.launch {
-            val c = repository.getCardById(cardId)
-            _card.value = c
-            if (c?.categoryId != null) {
-                val cat = categoryRepository.getCategoryById(c.categoryId)
-                _categoryName.value = cat?.name
+            try {
+                val c = repository.getCardById(cardId)
+                _card.value = c
+                if (c?.categoryId != null) {
+                    val cat = categoryRepository.getCategoryById(c.categoryId)
+                    _categoryName.value = cat?.name
+                }
+            } catch (e: Exception) {
+                _error.value = "Failed to load card details"
             }
         }
     }
@@ -58,7 +68,20 @@ class CardDetailViewModel(
 
     fun deleteCard() {
         viewModelScope.launch {
-            _card.value?.let { repository.deleteCard(it) }
+            try {
+                _card.value?.let { repository.deleteCard(it) }
+                _isDeleted.value = true
+            } catch (e: Exception) {
+                _error.value = "Failed to delete card"
+            }
         }
+    }
+
+    fun clearError() {
+        _error.value = null
+    }
+
+    fun onDeleteComplete() {
+        _isDeleted.value = false
     }
 }

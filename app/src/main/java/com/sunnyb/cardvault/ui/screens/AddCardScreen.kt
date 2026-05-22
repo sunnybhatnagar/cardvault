@@ -2,6 +2,7 @@ package com.sunnyb.cardvault.ui.screens
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.widget.Toast
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -50,10 +51,28 @@ fun AddCardScreen(
     viewModel: AddCardViewModel = viewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val error by viewModel.error.collectAsState()
+    val saveSuccess by viewModel.saveSuccess.collectAsState()
+    val context = LocalContext.current
 
     LaunchedEffect(editCardId) {
         if (editCardId != null) {
             viewModel.loadForEdit(editCardId)
+        }
+    }
+
+    LaunchedEffect(error) {
+        error?.let {
+            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+            viewModel.clearError()
+        }
+    }
+
+    LaunchedEffect(saveSuccess) {
+        if (saveSuccess) {
+            Toast.makeText(context, "Card saved", Toast.LENGTH_SHORT).show()
+            viewModel.onSaveComplete()
+            onSaved()
         }
     }
 
@@ -180,10 +199,7 @@ fun AddCardScreen(
                     }
                 } else {
                     Button(
-                        onClick = {
-                            viewModel.saveCard()
-                            onSaved()
-                        },
+                        onClick = { viewModel.saveCard() },
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),

@@ -21,6 +21,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
 import com.sunnyb.cardvault.data.db.entity.Card
 import com.sunnyb.cardvault.ui.theme.*
 import com.sunnyb.cardvault.viewmodel.CategoryDetailViewModel
@@ -35,13 +37,30 @@ fun CategoryDetailScreen(
 ) {
     val category by viewModel.category.collectAsState()
     val cards by viewModel.cards.collectAsState()
+    val error by viewModel.error.collectAsState()
+    val isDeleted by viewModel.isDeleted.collectAsState()
     var isEditing by remember { mutableStateOf(false) }
     var editName by remember { mutableStateOf("") }
     var editIcon by remember { mutableStateOf("") }
     var showDeleteConfirm by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     LaunchedEffect(categoryId) {
         viewModel.loadCategory(categoryId)
+    }
+
+    LaunchedEffect(error) {
+        error?.let {
+            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+            viewModel.clearError()
+        }
+    }
+
+    LaunchedEffect(isDeleted) {
+        if (isDeleted) {
+            viewModel.onDeleteComplete()
+            onBack()
+        }
     }
 
     if (showDeleteConfirm) {
@@ -56,7 +75,6 @@ fun CategoryDetailScreen(
                 TextButton(onClick = {
                     viewModel.deleteCategory()
                     showDeleteConfirm = false
-                    onBack()
                 }) { Text("Delete", color = MaterialTheme.colorScheme.secondary) }
             },
             dismissButton = {

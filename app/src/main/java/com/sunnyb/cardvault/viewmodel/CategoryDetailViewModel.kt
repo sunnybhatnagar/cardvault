@@ -19,26 +19,53 @@ class CategoryDetailViewModel : ViewModel() {
     private val _cards = MutableStateFlow<List<Card>>(emptyList())
     val cards: StateFlow<List<Card>> = _cards.asStateFlow()
 
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+
+    private val _isDeleted = MutableStateFlow(false)
+    val isDeleted: StateFlow<Boolean> = _isDeleted.asStateFlow()
+
     fun loadCategory(categoryId: Long) {
         viewModelScope.launch {
-            _category.value = categoryRepository.getCategoryById(categoryId)
+            try {
+                _category.value = categoryRepository.getCategoryById(categoryId)
 
-            cardRepository.getCardsByCategory(categoryId).collect { cardList ->
-                _cards.value = cardList
+                cardRepository.getCardsByCategory(categoryId).collect { cardList ->
+                    _cards.value = cardList
+                }
+            } catch (e: Exception) {
+                _error.value = "Failed to load category"
             }
         }
     }
 
     fun updateCategory(category: Category) {
         viewModelScope.launch {
-            categoryRepository.updateCategory(category)
-            _category.value = category
+            try {
+                categoryRepository.updateCategory(category)
+                _category.value = category
+            } catch (e: Exception) {
+                _error.value = "Failed to update category"
+            }
         }
     }
 
     fun deleteCategory() {
         viewModelScope.launch {
-            _category.value?.let { categoryRepository.deleteCategory(it) }
+            try {
+                _category.value?.let { categoryRepository.deleteCategory(it) }
+                _isDeleted.value = true
+            } catch (e: Exception) {
+                _error.value = "Failed to delete category"
+            }
         }
+    }
+
+    fun clearError() {
+        _error.value = null
+    }
+
+    fun onDeleteComplete() {
+        _isDeleted.value = false
     }
 }

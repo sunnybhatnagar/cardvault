@@ -40,12 +40,22 @@ class AddCardViewModel : ViewModel() {
     private val _state = MutableStateFlow(AddCardUiState())
     val state: StateFlow<AddCardUiState> = _state.asStateFlow()
 
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+
+    private val _saveSuccess = MutableStateFlow(false)
+    val saveSuccess: StateFlow<Boolean> = _saveSuccess.asStateFlow()
+
     private var editCardId: Long? = null
 
     init {
         viewModelScope.launch {
-            categoryRepository.allCategories.collect { categories ->
-                _state.update { it.copy(categories = categories) }
+            try {
+                categoryRepository.allCategories.collect { categories ->
+                    _state.update { it.copy(categories = categories) }
+                }
+            } catch (e: Exception) {
+                _error.value = "Failed to load categories"
             }
         }
     }
@@ -53,19 +63,23 @@ class AddCardViewModel : ViewModel() {
     fun loadForEdit(cardId: Long) {
         editCardId = cardId
         viewModelScope.launch {
-            val card = cardRepository.getCardById(cardId) ?: return@launch
-            _state.update {
-                it.copy(
-                    step = 3,
-                    nickname = card.nickname,
-                    issuer = card.issuer ?: "",
-                    cardNumber = card.cardNumber,
-                    expiry = card.expiry.replace("/", ""),
-                    cvv = card.cvv,
-                    categoryId = card.categoryId,
-                    hasExistingFrontImage = card.frontImagePath != null,
-                    hasExistingBackImage = card.backImagePath != null
-                )
+            try {
+                val card = cardRepository.getCardById(cardId) ?: return@launch
+                _state.update {
+                    it.copy(
+                        step = 3,
+                        nickname = card.nickname,
+                        issuer = card.issuer ?: "",
+                        cardNumber = card.cardNumber,
+                        expiry = card.expiry.replace("/", ""),
+                        cvv = card.cvv,
+                        categoryId = card.categoryId,
+                        hasExistingFrontImage = card.frontImagePath != null,
+                        hasExistingBackImage = card.backImagePath != null
+                    )
+                }
+            } catch (e: Exception) {
+                _error.value = "Failed to load card for editing"
             }
         }
     }
@@ -143,25 +157,31 @@ class AddCardViewModel : ViewModel() {
             val s = _state.value
             _state.update { it.copy(isSaving = true) }
 
-            val formattedExpiry = if (s.expiry.length == 4) "${s.expiry.take(2)}/${s.expiry.drop(2)}" else s.expiry
-            val card = Card(
-                nickname = s.nickname,
-                issuer = s.issuer,
-                cardNumber = s.cardNumber,
-                expiry = formattedExpiry,
-                cvv = s.cvv,
-                categoryId = s.categoryId
-            )
+            try {
+                val formattedExpiry = if (s.expiry.length == 4) "${s.expiry.take(2)}/${s.expiry.drop(2)}" else s.expiry
+                val card = Card(
+                    nickname = s.nickname,
+                    issuer = s.issuer,
+                    cardNumber = s.cardNumber,
+                    expiry = formattedExpiry,
+                    cvv = s.cvv,
+                    categoryId = s.categoryId
+                )
 
-            if (editCardId != null) {
-                cardRepository.updateCard(card.copy(id = editCardId!!))
-                copyImagesToEncrypted(editCardId!!, s.frontImageUri, s.backImageUri)
-            } else {
-                val newId = cardRepository.insertCard(card)
-                copyImagesToEncrypted(newId, s.frontImageUri, s.backImageUri)
+                if (editCardId != null) {
+                    cardRepository.updateCard(card.copy(id = editCardId!!))
+                    copyImagesToEncrypted(editCardId!!, s.frontImageUri, s.backImageUri)
+                } else {
+                    val newId = cardRepository.insertCard(card)
+                    copyImagesToEncrypted(newId, s.frontImageUri, s.backImageUri)
+                }
+
+                _state.update { it.copy(isSaving = false, cardNumberError = null) }
+                _saveSuccess.value = true
+            } catch (e: Exception) {
+                _state.update { it.copy(isSaving = false) }
+                _error.value = "Failed to save card. Please try again."
             }
-
-            _state.update { it.copy(isSaving = false, cardNumberError = null) }
         }
     }
 
@@ -184,23 +204,35 @@ class AddCardViewModel : ViewModel() {
         withContext(Dispatchers.IO) {
             for ((uri, suffix) in listOf(frontUri to "front", backUri to "back")) {
                 if (uri == null) continue
-                val fileName = "card_${cardId}_$suffix.jpg"
-                val file = File(appContext.filesDir, fileName)
-                val encryptedFile = encryptionManager.createEncryptedFile(file)
+                try {
+                    val fileName = "card_${cardId}_$suffix.jpg"
+                    val file = File(appContext.filesDir, fileName)
+                    val encryptedFile = encryptionManager.createEncryptedFile(file)
 
-                appContext.contentResolver.openInputStream(uri)?.use { input ->
-                    encryptedFile.openFileOutput().use { output ->
-                        input.copyTo(output)
+                    appContext.contentResolver.openInputStream(uri)?.use { input ->
+                        encryptedFile.openFileOutput().use { output ->
+                            input.copyTo(output)
+                        }
                     }
-                }
 
-                cardRepository.updateCard(
-                    cardRepository.getCardById(cardId)!!.let { existing ->
-                        if (suffix == "front") existing.copy(frontImagePath = file.absolutePath)
+                    val existing = cardRepository.getCardById(cardId)
+                    if (existing != null) {
+                        val updated = if (suffix == "front") existing.copy(frontImagePath = file.absolutePath)
                         else existing.copy(backImagePath = file.absolutePath)
+                        cardRepository.updateCard(updated)
                     }
-                )
+                } catch (e: Exception) {
+                    throw Exception("Failed to process card image", e)
+                }
             }
         }
+    }
+
+    fun clearError() {
+        _error.value = null
+    }
+
+    fun onSaveComplete() {
+        _saveSuccess.value = false
     }
 }

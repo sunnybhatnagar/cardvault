@@ -21,7 +21,9 @@ import android.view.WindowManager
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import android.widget.Toast
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
@@ -42,11 +44,28 @@ fun CardDetailScreen(
     val card by viewModel.card.collectAsState()
     val categoryName by viewModel.categoryName.collectAsState()
     val backImageBitmap by viewModel.backImageBitmap.collectAsState()
+    val error by viewModel.error.collectAsState()
+    val isDeleted by viewModel.isDeleted.collectAsState()
     var showCardNumber by remember { mutableStateOf(false) }
     var showCvv by remember { mutableStateOf(false) }
     var isFlipped by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
     val density = LocalDensity.current
+    val context = LocalContext.current
+
+    LaunchedEffect(error) {
+        error?.let {
+            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+            viewModel.clearError()
+        }
+    }
+
+    LaunchedEffect(isDeleted) {
+        if (isDeleted) {
+            viewModel.onDeleteComplete()
+            onBack()
+        }
+    }
 
     val view = LocalView.current
     DisposableEffect(Unit) {
@@ -75,7 +94,6 @@ fun CardDetailScreen(
                 TextButton(onClick = {
                     showDeleteConfirm = false
                     viewModel.deleteCard()
-                    onBack()
                 }) { Text("Delete", color = MaterialTheme.colorScheme.secondary) }
             },
             dismissButton = {

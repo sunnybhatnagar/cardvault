@@ -15,11 +15,18 @@ class HomeViewModel : ViewModel() {
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+
     @OptIn(ExperimentalCoroutinesApi::class)
     val cards: StateFlow<List<Card>> = _searchQuery
         .flatMapLatest { query ->
             if (query.isBlank()) repository.allCards
             else repository.searchCards(query)
+        }
+        .catch {
+            _error.value = "Failed to load cards"
+            emit(emptyList())
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -32,5 +39,9 @@ class HomeViewModel : ViewModel() {
 
     fun filterByCategory(categoryId: Long?) {
         _selectedCategoryId.value = categoryId
+    }
+
+    fun clearError() {
+        _error.value = null
     }
 }

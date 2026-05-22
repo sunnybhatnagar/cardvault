@@ -97,9 +97,17 @@ class MainActivity : FragmentActivity() {
 
                     LaunchedEffect(Unit) {
                         biometricAuth.resultFlow.collect { result ->
-                            if (result is BiometricAuth.AuthResult.Success) {
-                                app.initializeDatabase()
-                                app.sessionManager.onAuthenticated()
+                            when (result) {
+                                is BiometricAuth.AuthResult.Success -> {
+                                    app.initializeDatabase()
+                                    app.sessionManager.onAuthenticated()
+                                }
+                                is BiometricAuth.AuthResult.Error -> {
+                                    // Error already shown by system dialog; user can retry
+                                }
+                                is BiometricAuth.AuthResult.Cancelled -> {
+                                    // User dismissed — keep lock screen
+                                }
                             }
                         }
                     }

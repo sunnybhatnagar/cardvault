@@ -23,6 +23,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sunnyb.cardvault.ui.components.CardTile
 import com.sunnyb.cardvault.ui.theme.*
 import com.sunnyb.cardvault.viewmodel.HomeViewModel
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,6 +35,15 @@ fun HomeScreen(
 ) {
     val cards by viewModel.cards.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
+    val error by viewModel.error.collectAsState()
+    val context = LocalContext.current
+
+    LaunchedEffect(error) {
+        error?.let {
+            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+            viewModel.clearError()
+        }
+    }
 
     Column(
         modifier = Modifier
