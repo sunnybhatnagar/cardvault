@@ -15,6 +15,9 @@ class HomeViewModel : ViewModel() {
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
+    private val _isLoading = MutableStateFlow(true)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
@@ -24,7 +27,9 @@ class HomeViewModel : ViewModel() {
             if (query.isBlank()) repository.allCards
             else repository.searchCards(query)
         }
+        .onEach { _isLoading.value = false }
         .catch {
+            _isLoading.value = false
             _error.value = "Failed to load cards"
             emit(emptyList())
         }
