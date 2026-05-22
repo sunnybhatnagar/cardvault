@@ -44,16 +44,14 @@ Card Vault keeps your credit and debit cards safely encrypted on your phone. No 
 
 <p align="center">
   <img src="screenshots/home_grid.png" width="200" />
-  <img src="screenshots/home_list.png" width="200" />
-  <img src="screenshots/add_card.png" width="200" />
-  <img src="screenshots/card_detail.png" width="200" />
+  <img src="screenshots/categories.png" width="200" />
+  <img src="screenshots/settings.png" width="200" />
+  <img src="screenshots/settings_light.png" width="200" />
 </p>
 
 <p align="center">
-  <img src="screenshots/settings.png" width="200" />
-  <img src="screenshots/categories.png" width="200" />
-  <img src="screenshots/dark_theme.png" width="200" />
-  <img src="screenshots/onboarding.png" width="200" />
+  <img src="screenshots/lock_screen.png" width="200" />
+  <img src="screenshots/about.png" width="200" />
 </p>
 
 ## Tech Stack
