@@ -16,6 +16,11 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        ksp {
+            arg("room.schemaLocation", "$projectDir/schemas")
+        }
+
         vectorDrawables {
             useSupportLibrary = true
         }
@@ -112,6 +117,9 @@ dependencies {
     debugImplementation("com.squareup.leakcanary:leakcanary-android:2.14")
     implementation("com.jakewharton.timber:timber:5.0.1")
     testImplementation(libs.junit)
+    testImplementation("androidx.arch.core:core-testing:2.2.0")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.espresso.core)
+    androidTestImplementation("androidx.room:room-testing:2.6.1")
 }
