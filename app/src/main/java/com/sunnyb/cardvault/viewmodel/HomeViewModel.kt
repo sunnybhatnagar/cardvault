@@ -8,6 +8,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
+enum class ViewMode { GRID, LIST }
+
 class HomeViewModel : ViewModel() {
 
     private val repository = CardVaultApp.instance.cardRepository
@@ -35,8 +37,15 @@ class HomeViewModel : ViewModel() {
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    private val _viewMode = MutableStateFlow(ViewMode.GRID)
+    val viewMode: StateFlow<ViewMode> = _viewMode.asStateFlow()
+
     private val _selectedCategoryId = MutableStateFlow<Long?>(null)
     val selectedCategoryId: StateFlow<Long?> = _selectedCategoryId.asStateFlow()
+
+    fun setViewMode(mode: ViewMode) {
+        _viewMode.value = mode
+    }
 
     fun onSearchQueryChange(query: String) {
         _searchQuery.value = query
