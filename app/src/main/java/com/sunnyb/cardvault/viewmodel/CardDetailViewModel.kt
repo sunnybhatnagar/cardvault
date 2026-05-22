@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import android.util.LruCache
 
 class CardDetailViewModel(
     savedStateHandle: SavedStateHandle
@@ -31,6 +32,8 @@ class CardDetailViewModel(
     private val _backImageBitmap = MutableStateFlow<Bitmap?>(null)
     val backImageBitmap: StateFlow<Bitmap?> = _backImageBitmap.asStateFlow()
 
+    private val imageCache = LruCache<String, Bitmap>(10)
+
     init {
         loadCard()
     }
@@ -49,8 +52,16 @@ class CardDetailViewModel(
     fun loadBackImage() {
         viewModelScope.launch {
             val path = _card.value?.backImagePath ?: return@launch
+            val cached = imageCache.get(path)
+            if (cached != null) {
+                _backImageBitmap.value = cached
+                return@launch
+            }
             val bitmap = withContext(Dispatchers.IO) {
                 encryptionManager.readEncryptedBitmap(path)
+            }
+            if (bitmap != null) {
+                imageCache.put(path, bitmap)
             }
             _backImageBitmap.value = bitmap
         }
