@@ -196,9 +196,13 @@ class SettingsViewModel : ViewModel() {
 
     fun listDriveBackups(context: Context) {
         viewModelScope.launch {
-            _driveState.value = DriveState.ListingBackups(emptyList())
-            val files = DriveBackupService.listBackups(context)
-            _driveBackups.value = files
+            try {
+                _driveState.value = DriveState.ListingBackups(emptyList())
+                val files = DriveBackupService.listBackups(context)
+                _driveBackups.value = files
+            } catch (e: Exception) {
+                _driveState.value = DriveState.Error("Failed to list backups")
+            }
         }
     }
 
