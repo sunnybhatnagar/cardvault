@@ -54,6 +54,7 @@ fun HelpScreen(onBack: () -> Unit) {
                 Bullet("Step 2: Take or import a photo of the back (CVV side)")
                 Bullet("Step 3: Fill in nickname, card number, expiry, CVV, category")
                 Bullet("Card number auto-scans from the front photo via OCR")
+                Bullet("If OCR fails, a message appears — enter details manually or retake the photo")
                 Bullet("Card number is validated using the Luhn algorithm")
             }
 
@@ -86,6 +87,7 @@ fun HelpScreen(onBack: () -> Unit) {
                 Bullet("Card images are encrypted with AES-256-GCM on-device")
                 Bullet("Database encrypted with SQLCipher using AES-256 key")
                 Bullet("Encryption keys stored in Android Keystore")
+                Bullet("Screenshots and screen recordings are blocked across the app")
             }
 
             Section("Backup & Restore") {

@@ -503,19 +503,63 @@ fun SettingsScreen(
                 containerColor = MaterialTheme.colorScheme.surface,
                 titleContentColor = MaterialTheme.colorScheme.onSurface,
                 textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                title = { Text("What's New in v1.0") },
+                title = { Text("What's New") },
                 text = {
-                    Column {
-                        Text("• Card flip animation", color = MaterialTheme.colorScheme.onSurface)
-                        Text("• Expiry notifications", color = MaterialTheme.colorScheme.onSurface)
-                        Text("• Configurable auto-lock timeout", color = MaterialTheme.colorScheme.onSurface)
-                        Text("• OCR card number scanning", color = MaterialTheme.colorScheme.onSurface)
-                        Text("• Category management", color = MaterialTheme.colorScheme.onSurface)
-                        Text("• Google Drive backup (optional)", color = MaterialTheme.colorScheme.onSurface)
-                        Text("• Encrypted backup & restore", color = MaterialTheme.colorScheme.onSurface)
-                        Text("• Luhn validation", color = MaterialTheme.colorScheme.onSurface)
-                        Text("• Screenshot prevention", color = MaterialTheme.colorScheme.onSurface)
-                        Text("• Permission rationale dialogs", color = MaterialTheme.colorScheme.onSurface)
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("v1.1 — May 2026", fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary)
+                        Text("•  Error handling and crash prevention improvements",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface)
+                        Text("•  Card image compression (smaller storage, faster loading)",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface)
+                        Text("•  Shimmer loading animation while cards load",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface)
+                        Text("•  Screenshot blocking on all screens",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface)
+                        Text("•  Camera temp files cleaned up automatically",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface)
+                        Text("•  OCR failure messages with manual entry guidance",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface)
+                        Text("•  Decrypted image cache for smoother card flipping",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface)
+                        Text("•  Drive backup reliability improvements",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface)
+                        Text("•  Room migration testing framework",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface)
+
+                        Spacer(Modifier.height(12.dp))
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                        Spacer(Modifier.height(8.dp))
+
+                        Text("v1.0 — Initial Release", fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary)
+                        Text("•  Card flip animation", style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface)
+                        Text("•  Expiry notifications", style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface)
+                        Text("•  Configurable auto-lock timeout", style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface)
+                        Text("•  OCR card number scanning", style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface)
+                        Text("•  Category management", style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface)
+                        Text("•  Google Drive backup (optional)", style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface)
+                        Text("•  Encrypted backup & restore", style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface)
+                        Text("•  Luhn validation", style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface)
+                        Text("•  Permission rationale dialogs", style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface)
                     }
                 },
                 confirmButton = {
