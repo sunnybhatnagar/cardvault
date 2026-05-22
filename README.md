@@ -37,7 +37,7 @@ Card Vault keeps your credit and debit cards safely encrypted on your phone. No 
 | 📂 **Categories** | Organize cards into custom groups. Search by name, issuer, or number. |
 | ☁️ **Backup & Restore** | Encrypted local backups. Optional Google Drive sync. JSON export with AES encryption. |
 | 📅 **Expiry Alerts** | Push notification 30 days before a card expires. |
-| 🌙 **Dark & Light Themes** | Toggle between dark and light mode. Persists across sessions. |
+| 🌙 **Dark & Light Themes** | Toggle between dark and light mode. All screens react instantly — no restart needed. |
 | 🔐 **Privacy First** | No analytics, no tracking, no accounts, no internet required. |
 
 ## Screenshots
