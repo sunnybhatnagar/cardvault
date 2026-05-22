@@ -16,9 +16,14 @@ class CardRepository(private val cardDao: CardDao) {
 
     suspend fun getCardById(id: Long): Card? = cardDao.getCardById(id)
 
+    suspend fun getCardCountForCategory(categoryId: Long): Int =
+        cardDao.getCardCountForCategory(categoryId)
+
     suspend fun insertCard(card: Card): Long = cardDao.insertCard(card)
 
     suspend fun updateCard(card: Card) = cardDao.updateCard(card)
 
     suspend fun deleteCard(card: Card) = cardDao.deleteCard(card)
+
+    suspend fun deleteAllCards() = cardDao.deleteAllCards()
 }

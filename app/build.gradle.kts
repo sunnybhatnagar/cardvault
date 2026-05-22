@@ -22,8 +22,12 @@ android {
     }
 
     buildTypes {
-        release {
+        debug {
             isMinifyEnabled = false
+        }
+        release {
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -42,6 +46,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     composeOptions {
@@ -51,12 +56,14 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "/META-INF/DEPENDENCIES"
         }
     }
 }
 
 dependencies {
     implementation(libs.androidx.core.ktx)
+    implementation("androidx.core:core-splashscreen:1.0.1")
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.activity.compose)
@@ -73,10 +80,18 @@ dependencies {
     implementation(libs.androidx.security.crypto)
     implementation(libs.androidx.biometric)
     implementation("androidx.fragment:fragment-ktx:1.6.2")
+    implementation("io.coil-kt:coil-compose:2.6.0")
+    implementation("com.google.mlkit:text-recognition:16.0.0")
+    implementation("com.google.android.gms:play-services-auth:21.1.0")
+    implementation("com.google.api-client:google-api-client-android:2.2.0")
+    implementation("com.google.apis:google-api-services-drive:v3-rev20230815-2.0.0")
+    implementation("com.google.http-client:google-http-client-gson:1.43.3")
     implementation("net.zetetic:android-database-sqlcipher:4.5.4")
     implementation("androidx.sqlite:sqlite-ktx:2.4.0")
 
     debugImplementation(libs.androidx.ui.tooling)
+    debugImplementation("com.squareup.leakcanary:leakcanary-android:2.14")
+    implementation("com.jakewharton.timber:timber:5.0.1")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.espresso.core)

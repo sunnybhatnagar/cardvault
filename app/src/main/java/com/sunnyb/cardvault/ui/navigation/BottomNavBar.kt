@@ -1,19 +1,23 @@
 package com.sunnyb.cardvault.ui.navigation
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.sp
 import com.sunnyb.cardvault.ui.theme.NeonCyan
 
 sealed class BottomNavItem(
     val route: String,
     val label: String,
-    val icon: String
+    val icon: ImageVector
 ) {
-    data object Home : BottomNavItem("home", "Home", "🏠")
-    data object Categories : BottomNavItem("categories", "Categories", "📁")
-    data object Settings : BottomNavItem("settings", "Settings", "⚙️")
+    data object Home : BottomNavItem("home", "Home", Icons.Default.Home)
+    data object Categories : BottomNavItem("categories", "Categories", Icons.Default.Category)
+    data object Settings : BottomNavItem("settings", "Settings", Icons.Default.Settings)
 }
 
 val bottomNavItems = listOf(
@@ -35,12 +39,7 @@ fun BottomNavBar(
             NavigationBarItem(
                 selected = currentRoute == item.route,
                 onClick = { onNavigate(item.route) },
-                icon = {
-                    Text(
-                        text = item.icon,
-                        fontSize = 20.sp
-                    )
-                },
+                icon = { Icon(item.icon, contentDescription = item.label) },
                 label = {
                     Text(
                         text = item.label,

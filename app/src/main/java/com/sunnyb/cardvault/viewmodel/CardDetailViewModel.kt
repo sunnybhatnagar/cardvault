@@ -1,24 +1,35 @@
 package com.sunnyb.cardvault.viewmodel
 
+import android.graphics.Bitmap
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sunnyb.cardvault.CardVaultApp
 import com.sunnyb.cardvault.data.db.entity.Card
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class CardDetailViewModel(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val repository = CardVaultApp.instance.cardRepository
+    private val categoryRepository = CardVaultApp.instance.categoryRepository
+    private val encryptionManager = CardVaultApp.instance.encryptionManager
     private val cardId: Long = savedStateHandle["cardId"] ?: -1
 
     private val _card = MutableStateFlow<Card?>(null)
     val card: StateFlow<Card?> = _card.asStateFlow()
+
+    private val _categoryName = MutableStateFlow<String?>(null)
+    val categoryName: StateFlow<String?> = _categoryName.asStateFlow()
+
+    private val _backImageBitmap = MutableStateFlow<Bitmap?>(null)
+    val backImageBitmap: StateFlow<Bitmap?> = _backImageBitmap.asStateFlow()
 
     init {
         loadCard()
@@ -26,7 +37,22 @@ class CardDetailViewModel(
 
     private fun loadCard() {
         viewModelScope.launch {
-            _card.value = repository.getCardById(cardId)
+            val c = repository.getCardById(cardId)
+            _card.value = c
+            if (c?.categoryId != null) {
+                val cat = categoryRepository.getCategoryById(c.categoryId)
+                _categoryName.value = cat?.name
+            }
+        }
+    }
+
+    fun loadBackImage() {
+        viewModelScope.launch {
+            val path = _card.value?.backImagePath ?: return@launch
+            val bitmap = withContext(Dispatchers.IO) {
+                encryptionManager.readEncryptedBitmap(path)
+            }
+            _backImageBitmap.value = bitmap
         }
     }
 

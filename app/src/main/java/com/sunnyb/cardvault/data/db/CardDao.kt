@@ -24,6 +24,9 @@ interface CardDao {
     @Query("SELECT * FROM card WHERE id = :id")
     suspend fun getCardById(id: Long): Card?
 
+    @Query("SELECT COUNT(*) FROM card WHERE categoryId = :categoryId")
+    suspend fun getCardCountForCategory(categoryId: Long): Int
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCard(card: Card): Long
 
@@ -32,4 +35,7 @@ interface CardDao {
 
     @Delete
     suspend fun deleteCard(card: Card)
+
+    @Query("DELETE FROM card")
+    suspend fun deleteAllCards()
 }

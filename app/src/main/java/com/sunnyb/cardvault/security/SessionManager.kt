@@ -3,6 +3,8 @@ package com.sunnyb.cardvault.security
 import android.app.Application
 import android.os.Handler
 import android.os.Looper
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -15,8 +17,27 @@ class SessionManager(private val application: Application) {
     val isAuthenticated: StateFlow<Boolean> = _isAuthenticated
 
     private val handler = Handler(Looper.getMainLooper())
-    private val timeoutMs = 30_000L
     private val lockRunnable = Runnable { lock() }
+
+    private val prefs by lazy {
+        val masterKey = MasterKey.Builder(application)
+            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+            .build()
+        EncryptedSharedPreferences.create(
+            application,
+            "cardvault_secure_prefs",
+            masterKey,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+    }
+
+    val timeoutMs: Long
+        get() = prefs.getLong("lock_timeout", 30_000L)
+
+    fun setTimeoutMs(ms: Long) {
+        prefs.edit().putLong("lock_timeout", ms).apply()
+    }
 
     fun onAuthenticated() {
         _isAuthenticated.value = true
@@ -25,7 +46,12 @@ class SessionManager(private val application: Application) {
     }
 
     fun onBackground() {
-        handler.postDelayed(lockRunnable, timeoutMs)
+        val t = timeoutMs
+        when {
+            t < 0 -> return
+            t == 0L -> handler.post(lockRunnable)
+            else -> handler.postDelayed(lockRunnable, t)
+        }
     }
 
     fun onForeground() {

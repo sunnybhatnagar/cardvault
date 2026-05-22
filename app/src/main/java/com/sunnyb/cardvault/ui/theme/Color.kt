@@ -6,9 +6,13 @@ val DarkBackground = Color(0xFF0A0A1A)
 val DarkSurface = Color(0xFF12122A)
 val DarkSurfaceVariant = Color(0xFF1A1A35)
 
-val NeonCyan = Color(0xFF00FFFF)
-val NeonMagenta = Color(0xFFFF00FF)
-val NeonGreen = Color(0xFF00FF88)
+val LightBackground = Color(0xFFF5F5FA)
+val LightSurface = Color(0xFFFFFFFF)
+val LightSurfaceVariant = Color(0xFFE8E8F0)
+
+val NeonCyan = Color(0xFF00BBBB)
+val NeonMagenta = Color(0xFFDD00DD)
+val NeonGreen = Color(0xFF00CC77)
 val NeonOrange = Color(0xFFFF6600)
 
 val GradientChase = listOf(Color(0xFF0F0C29), Color(0xFF302B63), Color(0xFF24243E))
@@ -18,3 +22,10 @@ val GradientDefault = listOf(Color(0xFF0D0D0D), Color(0xFF1A1A2E), Color(0xFF0D0
 val TextPrimary = Color(0xFFFFFFFF)
 val TextSecondary = Color(0xFF888899)
 val TextMuted = Color(0xFF444466)
+
+val LightTextPrimary = Color(0xFF1A1A2E)
+val LightTextSecondary = Color(0xFF666680)
+val LightTextMuted = Color(0xFF9999AA)
+
+val DarkNeonCyan = Color(0xFF00FFFF)
+val DarkNeonMagenta = Color(0xFFFF00FF)

@@ -6,6 +6,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -73,10 +76,11 @@ fun LockScreen(
                     .background(NeonCyan.copy(alpha = 0.1f)),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "🔒",
-                    fontSize = 28.sp,
-                    modifier = Modifier.alpha(alpha)
+                Icon(
+                    imageVector = Icons.Default.Lock,
+                    contentDescription = "Locked",
+                    tint = TextPrimary,
+                    modifier = Modifier.size(28.dp).alpha(alpha)
                 )
             }
             Spacer(Modifier.height(16.dp))

@@ -1,15 +1,18 @@
 package com.sunnyb.cardvault.security
 
 import android.content.Context
-import android.security.keystore.KeyGenParameterSpec
-import android.security.keystore.KeyProperties
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import androidx.security.crypto.EncryptedFile
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import java.io.File
+import java.security.Key
 import java.security.KeyStore
+import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
+import javax.crypto.spec.GCMParameterSpec
 
 class EncryptionManager(private val context: Context) {
 
@@ -58,5 +61,38 @@ class EncryptionManager(private val context: Context) {
             masterKey,
             EncryptedFile.FileEncryptionScheme.AES256_GCM_HKDF_4KB
         ).build()
+    }
+
+    fun encryptData(plaintext: ByteArray): ByteArray {
+        val keyStore = KeyStore.getInstance("AndroidKeyStore")
+        keyStore.load(null)
+        val secretKey = keyStore.getKey(MasterKey.DEFAULT_MASTER_KEY_ALIAS, null) as SecretKey
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(Cipher.ENCRYPT_MODE, secretKey)
+        val iv = cipher.iv
+        val encrypted = cipher.doFinal(plaintext)
+        return iv + encrypted
+    }
+
+    fun decryptData(ciphertext: ByteArray): ByteArray {
+        val keyStore = KeyStore.getInstance("AndroidKeyStore")
+        keyStore.load(null)
+        val secretKey = keyStore.getKey(MasterKey.DEFAULT_MASTER_KEY_ALIAS, null) as SecretKey
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        val iv = ciphertext.copyOfRange(0, 12)
+        val data = ciphertext.copyOfRange(12, ciphertext.size)
+        cipher.init(Cipher.DECRYPT_MODE, secretKey, GCMParameterSpec(128, iv))
+        return cipher.doFinal(data)
+    }
+
+    fun readEncryptedBitmap(filePath: String): Bitmap? {
+        return try {
+            val encryptedFile = openEncryptedFile(File(filePath))
+            encryptedFile.openFileInput().use { input ->
+                BitmapFactory.decodeStream(input)
+            }
+        } catch (e: Exception) {
+            null
+        }
     }
 }

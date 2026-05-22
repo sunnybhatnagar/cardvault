@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="splash_background">#0A0A1A</color>
+    <color name="neon_cyan">#00FFFF</color>
+    <color name="neon_magenta">#FF00FF</color>
+</resources>

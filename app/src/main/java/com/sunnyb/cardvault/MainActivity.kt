@@ -1,13 +1,18 @@
 package com.sunnyb.cardvault
 
+import android.Manifest
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.compose.setContent
-import androidx.fragment.app.FragmentActivity
+import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -17,15 +22,29 @@ import com.sunnyb.cardvault.ui.navigation.BottomNavBar
 import com.sunnyb.cardvault.ui.navigation.NavGraph
 import com.sunnyb.cardvault.ui.navigation.Routes
 import com.sunnyb.cardvault.ui.screens.LockScreen
+import com.sunnyb.cardvault.ui.screens.OnboardingScreen
 import com.sunnyb.cardvault.ui.theme.CardVaultTheme
 import com.sunnyb.cardvault.ui.theme.DarkBackground
+import com.sunnyb.cardvault.ui.theme.ThemeMode
+import com.sunnyb.cardvault.util.ExpiryChecker
+import com.sunnyb.cardvault.util.NotificationHelper
+import kotlinx.coroutines.flow.first
 
 class MainActivity : FragmentActivity() {
 
     private lateinit var biometricAuth: BiometricAuth
+    private var notificationPermRequested = false
+
+    private val notificationPermLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+
+        val themePrefs = getSharedPreferences("cardvault_theme", MODE_PRIVATE)
 
         biometricAuth = BiometricAuth(this)
 
@@ -46,7 +65,40 @@ class MainActivity : FragmentActivity() {
         })
 
         setContent {
-            CardVaultTheme {
+            val themePrefs = getSharedPreferences("cardvault_theme", MODE_PRIVATE)
+            val onboardingPrefs = getSharedPreferences("cardvault_onboarding", MODE_PRIVATE)
+            var showOnboarding by remember {
+                mutableStateOf(!onboardingPrefs.getBoolean("done", false))
+            }
+            var currentTheme by remember {
+                mutableStateOf(ThemeMode.valueOf(themePrefs.getString("theme_mode", "DARK") ?: "DARK"))
+            }
+
+            val themeChangeObserver = remember {
+                androidx.lifecycle.LifecycleEventObserver { _, event ->
+                    if (event == Lifecycle.Event.ON_RESUME) {
+                        val saved = ThemeMode.valueOf(themePrefs.getString("theme_mode", "DARK") ?: "DARK")
+                        if (saved != currentTheme) currentTheme = saved
+                    }
+                }
+            }
+
+            DisposableEffect(lifecycle) {
+                lifecycle.addObserver(themeChangeObserver)
+                onDispose { lifecycle.removeObserver(themeChangeObserver) }
+            }
+
+            CardVaultTheme(themeMode = currentTheme) {
+                if (showOnboarding) {
+                    OnboardingScreen(
+                        onComplete = {
+                            onboardingPrefs.edit().putBoolean("done", true).apply()
+                            showOnboarding = false
+                        }
+                    )
+                    return@CardVaultTheme
+                }
+
                 val isLocked by app.sessionManager.isLocked.collectAsState()
 
                 if (isLocked) {
@@ -71,6 +123,13 @@ class MainActivity : FragmentActivity() {
                     }
                 } else {
                     MainApp()
+
+                    if (!notificationPermRequested && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        LaunchedEffect(Unit) {
+                            notificationPermRequested = true
+                            notificationPermLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
+                    }
                 }
             }
         }
@@ -85,6 +144,20 @@ private fun MainApp() {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+
+    LaunchedEffect(Unit) {
+        val repo = CardVaultApp.instance.cardRepository
+        val cards = repo.allCards.first()
+        val expiring = ExpiryChecker.check(cards)
+        if (expiring.isNotEmpty()) {
+            val names = expiring.joinToString(", ") { "${it.nickname} (${it.expiry})" }
+            NotificationHelper.showExpiryNotification(
+                CardVaultApp.instance,
+                "Cards Expiring Soon",
+                names
+            )
+        }
+    }
 
     val bottomNavRoutes = listOf(Routes.HOME, Routes.CATEGORIES, Routes.SETTINGS)
     val showBottomBar = currentRoute in bottomNavRoutes

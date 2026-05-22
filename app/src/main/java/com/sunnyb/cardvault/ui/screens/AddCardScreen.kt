@@ -1,6 +1,10 @@
 package com.sunnyb.cardvault.ui.screens
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -10,36 +14,61 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.sunnyb.cardvault.ui.theme.*
+import com.sunnyb.cardvault.util.CardNumberTransformation
+import com.sunnyb.cardvault.util.ExpiryTransformation
+import com.sunnyb.cardvault.util.PermissionAction
+import com.sunnyb.cardvault.util.getPermissionAction
 import com.sunnyb.cardvault.viewmodel.AddCardViewModel
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddCardScreen(
+    editCardId: Long? = null,
     onBack: () -> Unit,
     onSaved: () -> Unit,
     viewModel: AddCardViewModel = viewModel()
 ) {
     val state by viewModel.state.collectAsState()
 
+    LaunchedEffect(editCardId) {
+        if (editCardId != null) {
+            viewModel.loadForEdit(editCardId)
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Add Card", fontWeight = FontWeight.Bold) },
+                title = {
+                    Text(
+                        if (editCardId != null) "Edit Card" else "Add Card",
+                        fontWeight = FontWeight.Bold
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -70,7 +99,7 @@ fun AddCardScreen(
                         .fillMaxHeight()
                         .fillMaxWidth(fraction = state.step / 3f)
                         .background(
-                            brush = androidx.compose.ui.graphics.Brush.horizontalGradient(
+                            brush = Brush.horizontalGradient(
                                 listOf(NeonCyan, NeonMagenta)
                             ),
                             shape = RoundedCornerShape(20.dp)
@@ -84,12 +113,14 @@ fun AddCardScreen(
                 1 -> StepPhotoCapture(
                     title = "📸 Front of Card",
                     imageUri = state.frontImageUri,
+                    hasExistingImage = state.hasExistingFrontImage,
                     onImageSelected = { viewModel.setFrontImage(it) },
                     onSkip = { viewModel.nextStep() }
                 )
                 2 -> StepPhotoCapture(
                     title = "📸 Back of Card",
                     imageUri = state.backImageUri,
+                    hasExistingImage = state.hasExistingBackImage,
                     onImageSelected = { viewModel.setBackImage(it) },
                     onSkip = { viewModel.nextStep() }
                 )
@@ -97,6 +128,7 @@ fun AddCardScreen(
                     nickname = state.nickname,
                     issuer = state.issuer,
                     cardNumber = state.cardNumber,
+                    cardNumberError = state.cardNumberError,
                     expiry = state.expiry,
                     cvv = state.cvv,
                     categories = state.categories,
@@ -158,7 +190,7 @@ fun AddCardScreen(
                             contentColor = NeonCyan
                         ),
                         shape = RoundedCornerShape(12.dp),
-                        enabled = state.nickname.isNotBlank() && state.cardNumber.isNotBlank()
+                        enabled = state.nickname.isNotBlank() && state.cardNumber.isNotBlank() && state.cardNumberError == null
                     ) {
                         if (state.isSaving) {
                             CircularProgressIndicator(
@@ -167,7 +199,7 @@ fun AddCardScreen(
                                 strokeWidth = 2.dp
                             )
                         } else {
-                            Text("💾 Save Card")
+                            Text(if (editCardId != null) "💾 Update Card" else "💾 Save Card")
                         }
                     }
                 }
@@ -200,9 +232,82 @@ fun AddCardScreen(
 private fun StepPhotoCapture(
     title: String,
     imageUri: Uri?,
+    hasExistingImage: Boolean = false,
     onImageSelected: (Uri) -> Unit,
     onSkip: () -> Unit
 ) {
+    val context = LocalContext.current
+
+    var tempImageUri by remember { mutableStateOf<Uri?>(null) }
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success) tempImageUri?.let { onImageSelected(it) }
+    }
+
+    val galleryLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri -> uri?.let { onImageSelected(it) } }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            val file = File.createTempFile("card_", ".jpg", context.cacheDir)
+            val uri = FileProvider.getUriForFile(
+                context, "${context.packageName}.fileprovider", file
+            )
+            tempImageUri = uri
+            cameraLauncher.launch(uri)
+        }
+    }
+
+    var showRationale by remember { mutableStateOf(false) }
+    var showSettingsPrompt by remember { mutableStateOf(false) }
+
+    if (showRationale) {
+        AlertDialog(
+            onDismissRequest = { showRationale = false },
+            containerColor = DarkSurface,
+            titleContentColor = TextPrimary,
+            textContentColor = TextSecondary,
+            title = { Text("Camera Permission") },
+            text = { Text("Card Vault needs camera access to scan your credit card details. No photos are uploaded anywhere.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showRationale = false
+                    permissionLauncher.launch(Manifest.permission.CAMERA)
+                }) { Text("Allow", color = NeonCyan) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRationale = false }) { Text("Cancel", color = TextSecondary) }
+            }
+        )
+    }
+
+    if (showSettingsPrompt) {
+        AlertDialog(
+            onDismissRequest = { showSettingsPrompt = false },
+            containerColor = DarkSurface,
+            titleContentColor = TextPrimary,
+            textContentColor = TextSecondary,
+            title = { Text("Camera Permission") },
+            text = { Text("Camera permission was permanently denied. Enable it in Settings → Apps → Card Vault → Permissions.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showSettingsPrompt = false
+                    context.startActivity(android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                        data = android.net.Uri.fromParts("package", context.packageName, null)
+                    })
+                }) { Text("Open Settings", color = NeonCyan) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSettingsPrompt = false }) { Text("Cancel", color = TextSecondary) }
+            }
+        )
+    }
+
     Column {
         Text(
             text = title,
@@ -224,17 +329,54 @@ private fun StepPhotoCapture(
                 )
                 .background(NeonCyan.copy(alpha = 0.02f))
                 .clickable {
-                    // TODO: launch camera/gallery picker
+                    val isGranted = ContextCompat.checkSelfPermission(
+                        context, Manifest.permission.CAMERA
+                    ) == PackageManager.PERMISSION_GRANTED
+                    val shouldRationale = (context as? androidx.activity.ComponentActivity)
+                        ?.shouldShowRequestPermissionRationale(Manifest.permission.CAMERA) ?: false
+
+                    when (getPermissionAction(isGranted, shouldRationale)) {
+                        PermissionAction.LAUNCH_CAMERA -> {
+                            val file = File.createTempFile("card_", ".jpg", context.cacheDir)
+                            val uri = FileProvider.getUriForFile(
+                                context, "${context.packageName}.fileprovider", file
+                            )
+                            tempImageUri = uri
+                            cameraLauncher.launch(uri)
+                        }
+                        PermissionAction.SHOW_RATIONALE -> showRationale = true
+                        PermissionAction.SHOW_SETTINGS_PROMPT -> showSettingsPrompt = true
+                    }
                 },
             contentAlignment = Alignment.Center
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(text = "📷", fontSize = 36.sp)
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = "Tap to capture",
-                    color = TextSecondary
+            if (imageUri != null) {
+                AsyncImage(
+                    model = imageUri,
+                    contentDescription = "Card image",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
                 )
+            } else if (hasExistingImage) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(Icons.Default.CameraAlt, contentDescription = null,
+                        modifier = Modifier.size(36.dp), tint = TextSecondary)
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = "Photo saved (tap to retake)",
+                        color = TextSecondary
+                    )
+                }
+            } else {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(Icons.Default.CameraAlt, contentDescription = null,
+                        modifier = Modifier.size(36.dp), tint = TextMuted)
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = "Tap to capture",
+                        color = TextSecondary
+                    )
+                }
             }
         }
 
@@ -244,7 +386,9 @@ private fun StepPhotoCapture(
             text = "— or import from gallery —",
             color = TextMuted,
             style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .clickable { galleryLauncher.launch("image/*") }
         )
 
         Spacer(Modifier.height(12.dp))
@@ -263,6 +407,7 @@ private fun StepCardDetails(
     nickname: String,
     issuer: String,
     cardNumber: String,
+    cardNumberError: String?,
     expiry: String,
     cvv: String,
     categories: List<com.sunnyb.cardvault.data.db.entity.Category>,
@@ -276,7 +421,7 @@ private fun StepCardDetails(
 ) {
     Column {
         Text(
-            text = "✏️ Card Details",
+            text = "Card Details",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.SemiBold,
             color = TextPrimary
@@ -286,9 +431,11 @@ private fun StepCardDetails(
         CardDetailField("Nickname", nickname, onNicknameChange)
         CardDetailField("Issuer (optional)", issuer, onIssuerChange)
         CardDetailField("Card Number", cardNumber, onCardNumberChange,
-            keyboardType = KeyboardType.Number)
+            keyboardType = KeyboardType.Number, error = cardNumberError,
+            visualTransformation = CardNumberTransformation)
         CardDetailField("Expiry (MM/YY)", expiry, onExpiryChange,
-            keyboardType = KeyboardType.Number)
+            keyboardType = KeyboardType.Number,
+            visualTransformation = ExpiryTransformation)
         CardDetailField("CVV", cvv, onCvvChange,
             keyboardType = KeyboardType.Number)
 
@@ -321,7 +468,9 @@ private fun CardDetailField(
     label: String,
     value: String,
     onValueChange: (String) -> Unit,
-    keyboardType: KeyboardType = KeyboardType.Text
+    keyboardType: KeyboardType = KeyboardType.Text,
+    error: String? = null,
+    visualTransformation: androidx.compose.ui.text.input.VisualTransformation? = null
 ) {
     OutlinedTextField(
         value = value,
@@ -331,6 +480,9 @@ private fun CardDetailField(
             .fillMaxWidth()
             .padding(vertical = 4.dp),
         singleLine = true,
+        isError = error != null,
+        supportingText = error?.let { { Text(it, color = NeonMagenta) } },
+        visualTransformation = visualTransformation ?: androidx.compose.ui.text.input.VisualTransformation.None,
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = NeonCyan.copy(alpha = 0.3f),
@@ -341,7 +493,9 @@ private fun CardDetailField(
             focusedTextColor = TextPrimary,
             unfocusedTextColor = TextPrimary,
             focusedLabelColor = NeonCyan,
-            unfocusedLabelColor = TextSecondary
+            unfocusedLabelColor = TextSecondary,
+            errorBorderColor = NeonMagenta.copy(alpha = 0.5f),
+            errorLabelColor = NeonMagenta
         ),
         shape = RoundedCornerShape(12.dp)
     )

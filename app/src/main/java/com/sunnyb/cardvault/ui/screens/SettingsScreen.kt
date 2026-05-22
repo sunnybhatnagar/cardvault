@@ -1,18 +1,142 @@
 package com.sunnyb.cardvault.ui.screens
 
+import android.app.Activity
+import android.content.Context
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Cloud
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Upload
+import androidx.compose.material3.Icon
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sunnyb.cardvault.ui.theme.*
+import com.sunnyb.cardvault.util.DriveBackupService
+import com.sunnyb.cardvault.viewmodel.SettingsViewModel
 
 @Composable
-fun SettingsScreen() {
+fun SettingsScreen(
+    onHelpClick: () -> Unit = {},
+    onAboutClick: () -> Unit = {},
+    viewModel: SettingsViewModel = viewModel()
+) {
+    val context = LocalContext.current
+    val exportState by viewModel.exportState.collectAsState()
+    val restoreState by viewModel.restoreState.collectAsState()
+    val currentTimeoutMs by viewModel.currentTimeoutMs.collectAsState()
+    var timeoutExpanded by remember { mutableStateOf(false) }
+
+    val currentLabel = SettingsViewModel.TIMEOUT_OPTIONS
+        .find { it.ms == currentTimeoutMs }?.label ?: "30 seconds"
+
+    val exportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/octet-stream")
+    ) { uri ->
+        uri?.let { viewModel.exportBackupToUri(context, it) }
+    }
+
+    val filePickerLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        uri?.let { viewModel.parseBackupFile(context, it) }
+    }
+
+    val signInLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            viewModel.onDriveSignedIn()
+        } else {
+            viewModel.resetDriveState()
+        }
+    }
+
+    val driveState by viewModel.driveState.collectAsState()
+    val driveBackups by viewModel.driveBackups.collectAsState()
+    val themeMode by viewModel.themeMode.collectAsState()
+    var showChangelog by remember { mutableStateOf(false) }
+    var showPrivacy by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) { viewModel.loadTheme(context) }
+
+    LaunchedEffect(exportState) {
+        when (val state = exportState) {
+            is SettingsViewModel.ExportState.Success -> {
+                Toast.makeText(context, "Backup exported", Toast.LENGTH_SHORT).show()
+                viewModel.resetExportState()
+            }
+            is SettingsViewModel.ExportState.Error -> {
+                Toast.makeText(context, "Export failed: ${state.message}", Toast.LENGTH_SHORT).show()
+                viewModel.resetExportState()
+            }
+            else -> {}
+        }
+    }
+
+    LaunchedEffect(restoreState) {
+        when (val state = restoreState) {
+            is SettingsViewModel.RestoreState.Success -> {
+                Toast.makeText(context, "Restore complete", Toast.LENGTH_SHORT).show()
+                viewModel.resetRestoreState()
+            }
+            is SettingsViewModel.RestoreState.Error -> {
+                Toast.makeText(context, state.message, Toast.LENGTH_LONG).show()
+                viewModel.resetRestoreState()
+            }
+            else -> {}
+        }
+    }
+
+    LaunchedEffect(driveState) {
+        when (val state = driveState) {
+            is SettingsViewModel.DriveState.Success -> {
+                Toast.makeText(context, "Drive operation complete", Toast.LENGTH_SHORT).show()
+                viewModel.resetDriveState()
+            }
+            is SettingsViewModel.DriveState.Error -> {
+                Toast.makeText(context, state.message, Toast.LENGTH_LONG).show()
+                viewModel.resetDriveState()
+            }
+            else -> {}
+        }
+    }
+
+    if (restoreState is SettingsViewModel.RestoreState.PendingConfirmation) {
+        val count = (restoreState as SettingsViewModel.RestoreState.PendingConfirmation).cardCount
+        AlertDialog(
+            onDismissRequest = { viewModel.cancelRestore() },
+            containerColor = DarkSurface,
+            titleContentColor = TextPrimary,
+            textContentColor = TextSecondary,
+            title = { Text("Restore Backup") },
+            text = { Text("This will replace all $count existing cards. Continue?") },
+            confirmButton = {
+                TextButton(onClick = { viewModel.confirmRestore() }) { Text("Restore", color = NeonCyan) }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.cancelRestore() }) { Text("Cancel", color = TextSecondary) }
+            }
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -29,22 +153,64 @@ fun SettingsScreen() {
         Spacer(Modifier.height(24.dp))
 
         SettingsCard {
+            Column {
+                Text("Auto-lock", style = MaterialTheme.typography.titleMedium,
+                    color = TextPrimary)
+                Text("Lock app after inactivity",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextSecondary)
+                Spacer(Modifier.height(8.dp))
+                Box {
+                    OutlinedButton(
+                        onClick = { timeoutExpanded = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = NeonCyan),
+                        border = ButtonDefaults.outlinedButtonBorder.copy(
+                            brush = androidx.compose.ui.graphics.SolidColor(NeonCyan.copy(alpha = 0.3f))
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) { Text(currentLabel) }
+                    DropdownMenu(
+                        expanded = timeoutExpanded,
+                        onDismissRequest = { timeoutExpanded = false }
+                    ) {
+                        SettingsViewModel.TIMEOUT_OPTIONS.forEach { option ->
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        option.label,
+                                        color = if (option.ms == currentTimeoutMs) NeonCyan else TextPrimary
+                                    )
+                                },
+                                onClick = {
+                                    viewModel.setLockTimeout(option.ms)
+                                    timeoutExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(Modifier.height(12.dp))
+
+        SettingsCard(onClick = { viewModel.toggleTheme(context) }) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    Text("Biometric Lock", style = MaterialTheme.typography.titleMedium,
+                    Text("App Theme", style = MaterialTheme.typography.titleMedium,
                         color = TextPrimary)
-                    Text("Require fingerprint to open app",
+                    Text(if (themeMode == com.sunnyb.cardvault.ui.theme.ThemeMode.DARK) "Dark mode" else "Light mode",
                         style = MaterialTheme.typography.bodyMedium,
                         color = TextSecondary)
                 }
-                var enabled by remember { mutableStateOf(true) }
                 Switch(
-                    checked = enabled,
-                    onCheckedChange = { enabled = it },
+                    checked = themeMode == com.sunnyb.cardvault.ui.theme.ThemeMode.DARK,
+                    onCheckedChange = { viewModel.toggleTheme(context) },
                     colors = SwitchDefaults.colors(
                         checkedThumbColor = NeonCyan,
                         checkedTrackColor = NeonCyan.copy(alpha = 0.3f)
@@ -55,7 +221,7 @@ fun SettingsScreen() {
 
         Spacer(Modifier.height(12.dp))
 
-        SettingsCard {
+        SettingsCard(onClick = { exportLauncher.launch("cardvault_backup.dat") }) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -64,26 +230,296 @@ fun SettingsScreen() {
                 Column {
                     Text("Export Backup", style = MaterialTheme.typography.titleMedium,
                         color = TextPrimary)
-                    Text("Save encrypted data to your device",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = TextSecondary)
+                    if (exportState is SettingsViewModel.ExportState.Exporting) {
+                        Text("Exporting...", style = MaterialTheme.typography.bodyMedium,
+                            color = NeonCyan)
+                    } else {
+                        Text("Save encrypted data to your device",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextSecondary)
+                    }
                 }
-                Text("📤", style = MaterialTheme.typography.titleLarge)
+                if (exportState is SettingsViewModel.ExportState.Exporting) {
+                    Text("⏳", style = MaterialTheme.typography.titleLarge)
+                } else {
+                    Icon(Icons.Default.Upload, contentDescription = "Export", tint = TextSecondary)
+                }
             }
         }
 
         Spacer(Modifier.height(12.dp))
 
-        SettingsCard {
-            Column {
-                Text("Card Vault", style = MaterialTheme.typography.titleMedium,
-                    color = TextPrimary)
-                Text("Version 1.0", style = MaterialTheme.typography.bodyMedium,
-                    color = TextSecondary)
-                Spacer(Modifier.height(4.dp))
-                Text("encrypted · private · yours",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = TextMuted)
+        SettingsCard(onClick = {
+            filePickerLauncher.launch(arrayOf("application/json", "*/*"))
+        }) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text("Restore from Backup", style = MaterialTheme.typography.titleMedium,
+                        color = TextPrimary)
+                    Text("Import cards from a backup file",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextSecondary)
+                }
+                if (restoreState is SettingsViewModel.RestoreState.Restoring) {
+                    Text("⏳", style = MaterialTheme.typography.titleLarge)
+                } else {
+                    Icon(Icons.Default.Download, contentDescription = "Restore", tint = TextSecondary)
+                }
+            }
+        }
+
+        Spacer(Modifier.height(12.dp))
+
+        SettingsCard(onClick = {
+            if (DriveBackupService.isSignedIn(context)) {
+                viewModel.backupToDrive(context)
+            } else {
+                signInLauncher.launch(DriveBackupService.getSignInIntent(context))
+            }
+        }) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text("Backup to Google Drive", style = MaterialTheme.typography.titleMedium,
+                        color = TextPrimary)
+                    val sub = when (driveState) {
+                        is SettingsViewModel.DriveState.Idle -> "Sync your cards to the cloud"
+                        is SettingsViewModel.DriveState.SigningIn -> "Signing in..."
+                        is SettingsViewModel.DriveState.BackingUp -> "Uploading..."
+                        else -> "Sync your cards to the cloud"
+                    }
+                    Text(sub, style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
+                }
+                if (driveState is SettingsViewModel.DriveState.BackingUp) {
+                    Text("⏳", style = MaterialTheme.typography.titleLarge)
+                } else {
+                    Icon(
+                        if (DriveBackupService.isSignedIn(context)) Icons.Default.Cloud else Icons.Default.Link,
+                        contentDescription = if (DriveBackupService.isSignedIn(context)) "Drive" else "Sign in",
+                        tint = TextSecondary
+                    )
+                }
+            }
+        }
+
+        Spacer(Modifier.height(12.dp))
+
+        SettingsCard(onClick = {
+            if (DriveBackupService.isSignedIn(context)) {
+                viewModel.listDriveBackups(context)
+            } else {
+                signInLauncher.launch(DriveBackupService.getSignInIntent(context))
+            }
+        }) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text("Restore from Google Drive", style = MaterialTheme.typography.titleMedium,
+                        color = TextPrimary)
+                    val sub = when (driveState) {
+                        is SettingsViewModel.DriveState.SigningIn -> "Signing in..."
+                        is SettingsViewModel.DriveState.ListingBackups -> "Loading backups..."
+                        is SettingsViewModel.DriveState.Restoring -> "Restoring..."
+                        else -> "Import cards from cloud backup"
+                    }
+                    Text(sub, style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
+                }
+                if (driveState is SettingsViewModel.DriveState.Restoring) {
+                    Text("⏳", style = MaterialTheme.typography.titleLarge)
+                } else {
+                    Icon(
+                        if (DriveBackupService.isSignedIn(context)) Icons.Default.Cloud else Icons.Default.Link,
+                        contentDescription = if (DriveBackupService.isSignedIn(context)) "Drive" else "Sign in",
+                        tint = TextSecondary
+                    )
+                }
+            }
+        }
+
+        if (driveBackups.isNotEmpty() && driveState is SettingsViewModel.DriveState.ListingBackups) {
+            AlertDialog(
+                onDismissRequest = { viewModel.resetDriveState() },
+                containerColor = DarkSurface,
+                titleContentColor = TextPrimary,
+                textContentColor = TextSecondary,
+                title = { Text("Select Backup") },
+                text = {
+                    Column {
+                        driveBackups.forEach { file ->
+                            TextButton(onClick = {
+                                viewModel.restoreFromDrive(context, file.id)
+                            }) {
+                                Text(file.name ?: "Backup", color = NeonCyan)
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { viewModel.resetDriveState() }) {
+                        Text("Cancel", color = TextSecondary)
+                    }
+                }
+            )
+        }
+
+        Spacer(Modifier.height(12.dp))
+
+        SettingsCard(onClick = onHelpClick) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text("Help Guide", style = MaterialTheme.typography.titleMedium,
+                        color = TextPrimary)
+                    Text("Learn how to use the app",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextSecondary)
+                }
+                Icon(Icons.AutoMirrored.Filled.HelpOutline, contentDescription = "Help", tint = TextSecondary)
+            }
+        }
+
+        Spacer(Modifier.height(12.dp))
+
+        SettingsCard(onClick = { showPrivacy = true }) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text("Privacy Policy", style = MaterialTheme.typography.titleMedium,
+                        color = TextPrimary)
+                    Text("How your data is handled",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextSecondary)
+                }
+                Icon(Icons.Default.Security, contentDescription = "Privacy", tint = TextSecondary)
+            }
+        }
+
+        Spacer(Modifier.height(12.dp))
+
+        SettingsCard(onClick = { showChangelog = true }) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text("What's New", style = MaterialTheme.typography.titleMedium,
+                        color = TextPrimary)
+                    Text("See what shipped in this version",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextSecondary)
+                }
+                Icon(Icons.Default.Info, contentDescription = "What's New", tint = TextSecondary)
+            }
+        }
+
+        if (showPrivacy) {
+            AlertDialog(
+                onDismissRequest = { showPrivacy = false },
+                containerColor = DarkSurface,
+                titleContentColor = TextPrimary,
+                textContentColor = TextSecondary,
+                title = { Text("Privacy Policy") },
+                text = {
+                    Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                        listOf(
+                            "Card Vault does not collect, store, or transmit any personal data. All information stays on your device.",
+                            "",
+                            "DATA STORAGE",
+                            "• Card information is stored only on your device",
+                            "• Database encrypted with AES-256 via SQLCipher",
+                            "• Images encrypted with AES-256-GCM",
+                            "• Keys stored in Android Keystore",
+                            "• No data sent to any server",
+                            "",
+                            "PERMISSIONS",
+                            "• Camera: taking photos of credit/debit cards",
+                            "• Notifications: alerting when a card nears expiry",
+                            "• Biometric: unlocking the app",
+                            "Photos captured only when you tap capture.",
+                            "",
+                            "THIRD-PARTY",
+                            "• ML Kit for on-device OCR (offline)",
+                            "• Drive API only on explicit sign-in",
+                            "",
+                            "Last updated: May 22, 2026"
+                        ).forEach { line ->
+                            Text(
+                                text = line,
+                                color = if (line.startsWith("•") || line.startsWith("Last") || line.startsWith("Photos"))
+                                    TextSecondary else TextPrimary,
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.padding(vertical = 2.dp)
+                            )
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showPrivacy = false }) { Text("OK", color = NeonCyan) }
+                }
+            )
+        }
+
+        if (showChangelog) {
+            AlertDialog(
+                onDismissRequest = { showChangelog = false },
+                containerColor = DarkSurface,
+                titleContentColor = TextPrimary,
+                textContentColor = TextSecondary,
+                title = { Text("What's New in v1.0") },
+                text = {
+                    Column {
+                        Text("• Card flip animation", color = TextPrimary)
+                        Text("• Expiry notifications", color = TextPrimary)
+                        Text("• Configurable auto-lock timeout", color = TextPrimary)
+                        Text("• OCR card number scanning", color = TextPrimary)
+                        Text("• Category management", color = TextPrimary)
+                        Text("• Google Drive backup (optional)", color = TextPrimary)
+                        Text("• Encrypted backup & restore", color = TextPrimary)
+                        Text("• Luhn validation", color = TextPrimary)
+                        Text("• Screenshot prevention", color = TextPrimary)
+                        Text("• Permission rationale dialogs", color = TextPrimary)
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showChangelog = false }) { Text("OK", color = NeonCyan) }
+                }
+            )
+        }
+
+        Spacer(Modifier.height(12.dp))
+
+        SettingsCard(onClick = onAboutClick) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text("About Card Vault", style = MaterialTheme.typography.titleMedium,
+                        color = TextPrimary)
+                    Text("Version 1.0 · Developer · Legal",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextSecondary)
+                }
+                Icon(Icons.Default.Info, contentDescription = "About",
+                    tint = TextSecondary)
             }
         }
     }
@@ -91,12 +527,14 @@ fun SettingsScreen() {
 
 @Composable
 private fun SettingsCard(
+    onClick: (() -> Unit)? = null,
     content: @Composable () -> Unit
 ) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = 4.dp)
+            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier),
         shape = RoundedCornerShape(16.dp),
         color = DarkSurface
     ) {

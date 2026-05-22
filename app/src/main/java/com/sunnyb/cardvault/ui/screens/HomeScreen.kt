@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -62,45 +63,73 @@ fun HomeScreen(
             shape = RoundedCornerShape(12.dp)
         )
 
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            contentPadding = PaddingValues(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.weight(1f)
-        ) {
-            items(cards, key = { it.id }) { card ->
-                CardTile(
-                    card = card,
-                    onClick = { onCardClick(card.id) }
-                )
+        if (cards.isEmpty() && searchQuery.isBlank()) {
+            Box(
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(Icons.Default.CreditCard, contentDescription = null,
+                        modifier = Modifier.size(48.dp), tint = TextMuted)
+                    Spacer(Modifier.height(16.dp))
+                    Text("No cards yet", style = MaterialTheme.typography.titleMedium,
+                        color = TextPrimary, fontWeight = FontWeight.SemiBold)
+                    Spacer(Modifier.height(8.dp))
+                    Text("Tap + to add your first card",
+                        style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
+                }
             }
+        } else if (cards.isEmpty() && searchQuery.isNotBlank()) {
+            Box(
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("No cards match \"$searchQuery\"",
+                        style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
+                }
+            }
+        } else {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                contentPadding = PaddingValues(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                items(cards, key = { it.id }) { card ->
+                    CardTile(
+                        card = card,
+                        onClick = { onCardClick(card.id) }
+                    )
+                }
 
-            item {
-                Box(
-                    modifier = Modifier
-                        .height(160.dp)
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
-                        .border(
-                            width = 2.dp,
-                            color = TextMuted.copy(alpha = 0.3f),
-                            shape = RoundedCornerShape(16.dp)
-                        )
-                        .clickable(onClick = onAddCard),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = "+",
-                            fontSize = 32.sp,
-                            color = TextMuted
-                        )
-                        Text(
-                            text = "Add Card",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = TextMuted
-                        )
+                item {
+                    Box(
+                        modifier = Modifier
+                            .height(160.dp)
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .border(
+                                width = 2.dp,
+                                color = TextMuted.copy(alpha = 0.3f),
+                                shape = RoundedCornerShape(16.dp)
+                            )
+                            .clickable(onClick = onAddCard),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = "+",
+                                fontSize = 32.sp,
+                                color = TextMuted
+                            )
+                            Text(
+                                text = "Add Card",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = TextMuted
+                            )
+                        }
                     }
                 }
             }
