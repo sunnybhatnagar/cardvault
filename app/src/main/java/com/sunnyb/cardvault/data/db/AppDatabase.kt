@@ -9,7 +9,7 @@ import com.sunnyb.cardvault.data.db.entity.Category
 @Database(
     entities = [Card::class, Category::class],
     version = 1,
-    exportSchema = false
+    exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun cardDao(): CardDao
