@@ -4,9 +4,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.items as gridItems
+import androidx.compose.foundation.lazy.items as listItems
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CreditCard
@@ -20,8 +22,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.sunnyb.cardvault.ui.components.CardListItem
 import com.sunnyb.cardvault.ui.components.CardTile
+import com.sunnyb.cardvault.ui.components.ShimmerCardListItem
 import com.sunnyb.cardvault.ui.components.ShimmerCardTile
+import com.sunnyb.cardvault.viewmodel.ViewMode
 import com.sunnyb.cardvault.ui.theme.*
 import com.sunnyb.cardvault.viewmodel.HomeViewModel
 import android.widget.Toast
@@ -38,6 +43,7 @@ fun HomeScreen(
     val searchQuery by viewModel.searchQuery.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
+    val viewMode by viewModel.viewMode.collectAsState()
     val context = LocalContext.current
 
     LaunchedEffect(error) {
@@ -76,17 +82,69 @@ fun HomeScreen(
             shape = RoundedCornerShape(12.dp)
         )
 
-        if (isLoading) {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                contentPadding = PaddingValues(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.weight(1f),
-                userScrollEnabled = false
+        Spacer(Modifier.height(4.dp))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "${cards.size} card${if (cards.size != 1) "s" else ""}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(0.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                items(6) {
-                    ShimmerCardTile()
+                ViewMode.entries.forEach { mode ->
+                    val isSelected = viewMode == mode
+                    Text(
+                        text = mode.name,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(
+                                if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.13f)
+                                else MaterialTheme.colorScheme.surface
+                            )
+                            .clickable { viewModel.setViewMode(mode) }
+                            .padding(horizontal = 14.dp, vertical = 6.dp),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                        color = if (isSelected) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1
+                    )
+                }
+            }
+        }
+
+        if (isLoading) {
+            if (viewMode == ViewMode.GRID) {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    contentPadding = PaddingValues(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.weight(1f),
+                    userScrollEnabled = false
+                ) {
+                    items(6) {
+                        ShimmerCardTile()
+                    }
+                }
+            } else {
+                LazyColumn(
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.weight(1f),
+                    userScrollEnabled = false
+                ) {
+                    items(6) {
+                        ShimmerCardListItem()
+                    }
                 }
             }
         } else if (cards.isEmpty() && searchQuery.isBlank()) {
@@ -126,7 +184,7 @@ fun HomeScreen(
                         style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
-        } else {
+        } else if (viewMode == ViewMode.GRID) {
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
                 contentPadding = PaddingValues(16.dp),
@@ -134,7 +192,7 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.weight(1f)
             ) {
-                items(cards, key = { it.id }) { card ->
+                gridItems(cards, key = { it.id }) { card ->
                     CardTile(
                         card = card,
                         onClick = { onCardClick(card.id) }
@@ -167,6 +225,42 @@ fun HomeScreen(
                                 color = MaterialTheme.colorScheme.outline
                             )
                         }
+                    }
+                }
+            }
+        } else {
+            LazyColumn(
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                listItems(cards, key = { it.id }) { card ->
+                    CardListItem(
+                        card = card,
+                        onClick = { onCardClick(card.id) }
+                    )
+                }
+
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .border(
+                                width = 2.dp,
+                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            .clickable(onClick = onAddCard),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "+ Add Card",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.outline
+                        )
                     }
                 }
             }
