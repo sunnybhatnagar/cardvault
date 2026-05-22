@@ -1,5 +1,7 @@
 package com.sunnyb.cardvault.viewmodel
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -11,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
 import java.io.File
 
 data class AddCardUiState(
@@ -188,9 +191,18 @@ class AddCardViewModel : ViewModel() {
                 val file = File(appContext.filesDir, fileName)
                 val encryptedFile = encryptionManager.createEncryptedFile(file)
 
-                appContext.contentResolver.openInputStream(uri)?.use { input ->
+                val inputStream = appContext.contentResolver.openInputStream(uri)
+                val bitmap = decodeAndResizeBitmap(inputStream, maxWidth = 1080)
+                inputStream?.close()
+
+                if (bitmap != null) {
+                    val baos = ByteArrayOutputStream()
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 80, baos)
+                    val compressedBytes = baos.toByteArray()
+                    bitmap.recycle()
+
                     encryptedFile.openFileOutput().use { output ->
-                        input.copyTo(output)
+                        output.write(compressedBytes)
                     }
                 }
 
@@ -201,6 +213,38 @@ class AddCardViewModel : ViewModel() {
                     }
                 )
             }
+            cleanupTempImages()
         }
+    }
+
+    private fun decodeAndResizeBitmap(inputStream: java.io.InputStream?, maxWidth: Int): Bitmap? {
+        if (inputStream == null) return null
+        val bytes = inputStream.readBytes()
+
+        val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, opts)
+
+        val sampleSize = if (opts.outWidth > maxWidth) opts.outWidth / maxWidth else 1
+        val decodeOpts = BitmapFactory.Options().apply { inSampleSize = sampleSize }
+        var bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, decodeOpts)
+            ?: return null
+
+        if (bitmap.width > maxWidth) {
+            val ratio = maxWidth.toFloat() / bitmap.width
+            val newHeight = (bitmap.height * ratio).toInt()
+            val resized = Bitmap.createScaledBitmap(bitmap, maxWidth, newHeight, true)
+            if (resized != bitmap) {
+                bitmap.recycle()
+                bitmap = resized
+            }
+        }
+        return bitmap
+    }
+
+    private fun cleanupTempImages() {
+        val cacheDir = appContext.cacheDir
+        cacheDir.listFiles()
+            ?.filter { it.name.startsWith("card_") }
+            ?.forEach { it.delete() }
     }
 }
