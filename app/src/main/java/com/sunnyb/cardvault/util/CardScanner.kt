@@ -2,7 +2,6 @@ package com.sunnyb.cardvault.util
 
 import android.content.Context
 import android.net.Uri
-import android.util.Log
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
@@ -39,7 +38,6 @@ object CardScanner {
             if (result == null) return@withContext ScannedCardInfo()
 
             val rawTexts = result.textBlocks.map { it.text }
-            Log.d("CardScanner", "ML Kit recognized text blocks: $rawTexts")
 
             val texts = rawTexts.map { normalizeOcr(it) }
 
