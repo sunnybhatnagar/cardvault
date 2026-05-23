@@ -3,6 +3,8 @@ package com.sunnyb.cardvault.security
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
+import androidx.exifinterface.media.ExifInterface
 import androidx.security.crypto.EncryptedFile
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
@@ -89,7 +91,29 @@ class EncryptionManager(private val context: Context) {
         return try {
             val encryptedFile = openEncryptedFile(File(filePath))
             encryptedFile.openFileInput().use { input ->
-                BitmapFactory.decodeStream(input)
+                val bytes = input.readBytes()
+                var rotation = 0f
+                try {
+                    val tmpFile = File(filePath + "_exif.jpg")
+                    tmpFile.writeBytes(bytes)
+                    val exif = ExifInterface(tmpFile.absolutePath)
+                    when (exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)) {
+                        ExifInterface.ORIENTATION_ROTATE_90 -> rotation = 90f
+                        ExifInterface.ORIENTATION_ROTATE_180 -> rotation = 180f
+                        ExifInterface.ORIENTATION_ROTATE_270 -> rotation = 270f
+                    }
+                    tmpFile.delete()
+                } catch (_: Exception) {}
+                var bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                if (bitmap != null && rotation != 0f) {
+                    val matrix = Matrix().apply { postRotate(rotation) }
+                    val rotated = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+                    if (rotated != bitmap) {
+                        bitmap.recycle()
+                        bitmap = rotated
+                    }
+                }
+                bitmap
             }
         } catch (e: Exception) {
             null

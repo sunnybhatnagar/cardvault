@@ -2,7 +2,9 @@ package com.sunnyb.cardvault.viewmodel
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
 import android.net.Uri
+import androidx.exifinterface.media.ExifInterface
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sunnyb.cardvault.CardVaultApp
@@ -280,6 +282,19 @@ class AddCardViewModel : ViewModel() {
         if (inputStream == null) return null
         val bytes = inputStream.readBytes()
 
+        var rotation = 0f
+        try {
+            val tmpFile = File(appContext.cacheDir, "exif_${System.nanoTime()}.jpg")
+            tmpFile.writeBytes(bytes)
+            val exif = ExifInterface(tmpFile.absolutePath)
+            when (exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)) {
+                ExifInterface.ORIENTATION_ROTATE_90 -> rotation = 90f
+                ExifInterface.ORIENTATION_ROTATE_180 -> rotation = 180f
+                ExifInterface.ORIENTATION_ROTATE_270 -> rotation = 270f
+            }
+            tmpFile.delete()
+        } catch (_: Exception) {}
+
         val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeByteArray(bytes, 0, bytes.size, opts)
 
@@ -287,6 +302,26 @@ class AddCardViewModel : ViewModel() {
         val decodeOpts = BitmapFactory.Options().apply { inSampleSize = sampleSize }
         var bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, decodeOpts)
             ?: return null
+
+        if (rotation != 0f) {
+            val matrix = Matrix().apply { postRotate(rotation) }
+            val rotated = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+            if (rotated != bitmap) {
+                bitmap.recycle()
+                bitmap = rotated
+            }
+        }
+
+        val cropMarginX = (bitmap.width * 0.10f).toInt()
+        val cropMarginY = (bitmap.height * 0.10f).toInt()
+        if (cropMarginX > 0 && cropMarginY > 0 && cropMarginX * 2 < bitmap.width && cropMarginY * 2 < bitmap.height) {
+            val cropped = Bitmap.createBitmap(bitmap, cropMarginX, cropMarginY,
+                bitmap.width - cropMarginX * 2, bitmap.height - cropMarginY * 2)
+            if (cropped != bitmap) {
+                bitmap.recycle()
+                bitmap = cropped
+            }
+        }
 
         if (bitmap.width > maxWidth) {
             val ratio = maxWidth.toFloat() / bitmap.width
