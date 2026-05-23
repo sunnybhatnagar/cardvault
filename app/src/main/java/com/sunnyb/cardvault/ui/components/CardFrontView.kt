@@ -54,7 +54,14 @@ fun CardFrontView(
                     color = TextSecondary,
                     fontSize = 12.sp
                 )
-                Text(text = "💳", fontSize = 20.sp)
+                if (card.variant.isNotBlank()) {
+                    Text(
+                        text = card.variant,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TextSecondary,
+                        fontSize = 10.sp
+                    )
+                }
             }
             Spacer(Modifier.weight(1f))
             Text(
@@ -70,6 +77,16 @@ fun CardFrontView(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
+                Column {
+                    if (card.cardholderName.isNotBlank()) {
+                        Text(
+                            text = card.cardholderName,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontFamily = FontFamily.Monospace,
+                            color = TextPrimary
+                        )
+                    }
+                }
                 Column {
                     Text(
                         text = "VALID THRU",

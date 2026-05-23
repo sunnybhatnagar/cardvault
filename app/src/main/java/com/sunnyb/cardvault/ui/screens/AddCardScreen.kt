@@ -128,40 +128,46 @@ fun AddCardScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            when (state.step) {
-                1 -> StepPhotoCapture(
-                    title = "Front of Card",
-                    imageUri = state.frontImageUri,
-                    hasExistingImage = state.hasExistingFrontImage,
-                    onImageSelected = { viewModel.setFrontImage(it) },
-                    onSkip = { viewModel.nextStep() }
-                )
-                2 -> StepPhotoCapture(
-                    title = "Back of Card",
-                    imageUri = state.backImageUri,
-                    hasExistingImage = state.hasExistingBackImage,
-                    onImageSelected = { viewModel.setBackImage(it) },
-                    onSkip = { viewModel.nextStep() }
-                )
-                3 -> StepCardDetails(
-                    nickname = state.nickname,
-                    issuer = state.issuer,
-                    cardNumber = state.cardNumber,
-                    cardNumberError = state.cardNumberError,
-                    expiry = state.expiry,
-                    cvv = state.cvv,
-                    categories = state.categories,
-                    selectedCategoryId = state.categoryId,
-                    onNicknameChange = { viewModel.updateNickname(it) },
-                    onIssuerChange = { viewModel.updateIssuer(it) },
-                    onCardNumberChange = { viewModel.updateCardNumber(it) },
-                    onExpiryChange = { viewModel.updateExpiry(it) },
-                    onCvvChange = { viewModel.updateCvv(it) },
-                    onCategoryChange = { viewModel.updateCategory(it) }
-                )
-            }
+                when (state.step) {
+                    1 -> StepPhotoCapture(
+                        title = "Front of Card",
+                        imageUri = state.frontImageUri,
+                        hasExistingImage = state.hasExistingFrontImage,
+                        onImageSelected = { viewModel.setFrontImage(it) },
+                        onSkip = { viewModel.nextStep() }
+                    )
+                    2 -> StepPhotoCapture(
+                        title = "Back of Card",
+                        imageUri = state.backImageUri,
+                        hasExistingImage = state.hasExistingBackImage,
+                        onImageSelected = { viewModel.setBackImage(it) },
+                        onSkip = { viewModel.nextStep() }
+                    )
+                    3 -> StepCardDetails(
+                        nickname = state.nickname,
+                        issuer = state.issuer,
+                        cardholderName = state.cardholderName,
+                        variant = state.variant,
+                        product = state.product,
+                        cardNumber = state.cardNumber,
+                        cardNumberError = state.cardNumberError,
+                        expiry = state.expiry,
+                        cvv = state.cvv,
+                        categories = state.categories,
+                        selectedCategoryId = state.categoryId,
+                        onNicknameChange = { viewModel.updateNickname(it) },
+                        onIssuerChange = { viewModel.updateIssuer(it) },
+                        onCardholderNameChange = { viewModel.updateCardholderName(it) },
+                        onVariantChange = { viewModel.updateVariant(it) },
+                        onProductChange = { viewModel.updateProduct(it) },
+                        onCardNumberChange = { viewModel.updateCardNumber(it) },
+                        onExpiryChange = { viewModel.updateExpiry(it) },
+                        onCvvChange = { viewModel.updateCvv(it) },
+                        onCategoryChange = { viewModel.updateCategory(it) }
+                    )
+                }
 
-            if (state.ocrFailed && state.step < 3) {
+            if (state.ocrFailed && state.step == 2 && state.backImageUri != null) {
                 Spacer(Modifier.height(8.dp))
                 Surface(
                     shape = RoundedCornerShape(12.dp),
@@ -434,10 +440,14 @@ private fun StepPhotoCapture(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun StepCardDetails(
     nickname: String,
     issuer: String,
+    cardholderName: String,
+    variant: String,
+    product: String,
     cardNumber: String,
     cardNumberError: String?,
     expiry: String,
@@ -446,11 +456,17 @@ private fun StepCardDetails(
     selectedCategoryId: Long?,
     onNicknameChange: (String) -> Unit,
     onIssuerChange: (String) -> Unit,
+    onCardholderNameChange: (String) -> Unit,
+    onVariantChange: (String) -> Unit,
+    onProductChange: (String) -> Unit,
     onCardNumberChange: (String) -> Unit,
     onExpiryChange: (String) -> Unit,
     onCvvChange: (String) -> Unit,
     onCategoryChange: (Long?) -> Unit
 ) {
+    val variantOptions = listOf("", "Visa", "Mastercard", "American Express", "RuPay", "Diners Club", "JCB", "Maestro")
+    var variantExpanded by remember { mutableStateOf(false) }
+
     Column {
         Text(
             text = "Card Details",
@@ -462,6 +478,53 @@ private fun StepCardDetails(
 
         CardDetailField("Nickname", nickname, onNicknameChange)
         CardDetailField("Issuer (optional)", issuer, onIssuerChange)
+        CardDetailField("Cardholder Name (optional)", cardholderName, onCardholderNameChange)
+        CardDetailField("Product (optional)", product, onProductChange)
+
+        Spacer(Modifier.height(8.dp))
+        Text("Variant", color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.bodyMedium)
+        Spacer(Modifier.height(4.dp))
+        ExposedDropdownMenuBox(
+            expanded = variantExpanded,
+            onExpandedChange = { variantExpanded = it }
+        ) {
+            OutlinedTextField(
+                value = variant,
+                onValueChange = {},
+                readOnly = true,
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = variantExpanded) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .menuAnchor(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+                    focusedContainerColor = MaterialTheme.colorScheme.surface,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                    cursorColor = MaterialTheme.colorScheme.primary,
+                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+                ),
+                shape = RoundedCornerShape(12.dp)
+            )
+            ExposedDropdownMenu(
+                expanded = variantExpanded,
+                onDismissRequest = { variantExpanded = false }
+            ) {
+                variantOptions.forEach { option ->
+                    DropdownMenuItem(
+                        text = { Text(if (option.isEmpty()) "None" else option) },
+                        onClick = {
+                            onVariantChange(option)
+                            variantExpanded = false
+                        }
+                    )
+                }
+            }
+        }
+
+        Spacer(Modifier.height(8.dp))
         CardDetailField("Card Number", cardNumber, onCardNumberChange,
             keyboardType = KeyboardType.Number, error = cardNumberError,
             visualTransformation = CardNumberTransformation)

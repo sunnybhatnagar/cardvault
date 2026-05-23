@@ -52,10 +52,13 @@ fun CardTile(
                     style = MaterialTheme.typography.labelSmall,
                     color = TextSecondary
                 )
-                Text(
-                    text = "💳",
-                    fontSize = 14.sp
-                )
+                if (card.variant.isNotBlank()) {
+                    Text(
+                        text = card.variant,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TextSecondary
+                    )
+                }
             }
             Spacer(Modifier.weight(1f))
             Text(

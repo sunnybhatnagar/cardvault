@@ -24,6 +24,9 @@ data class AddCardUiState(
     val hasExistingBackImage: Boolean = false,
     val nickname: String = "",
     val issuer: String = "",
+    val cardholderName: String = "",
+    val variant: String = "",
+    val product: String = "",
     val cardNumber: String = "",
     val cardNumberError: String? = null,
     val expiry: String = "",
@@ -74,6 +77,9 @@ class AddCardViewModel : ViewModel() {
                         step = 3,
                         nickname = card.nickname,
                         issuer = card.issuer ?: "",
+                        cardholderName = card.cardholderName,
+                        variant = card.variant,
+                        product = card.product,
                         cardNumber = card.cardNumber,
                         expiry = card.expiry.replace("/", ""),
                         cvv = card.cvv,
@@ -95,6 +101,7 @@ class AddCardViewModel : ViewModel() {
 
     fun setBackImage(uri: Uri) {
         _state.update { it.copy(backImageUri = uri) }
+        scanCardImage(uri)
     }
 
     fun updateNickname(value: String) {
@@ -103,6 +110,18 @@ class AddCardViewModel : ViewModel() {
 
     fun updateIssuer(value: String) {
         _state.update { it.copy(issuer = value.take(50)) }
+    }
+
+    fun updateCardholderName(value: String) {
+        _state.update { it.copy(cardholderName = value.take(50)) }
+    }
+
+    fun updateVariant(value: String) {
+        _state.update { it.copy(variant = value) }
+    }
+
+    fun updateProduct(value: String) {
+        _state.update { it.copy(product = value.take(50)) }
     }
 
     fun updateCardNumber(value: String) {
@@ -156,6 +175,21 @@ class AddCardViewModel : ViewModel() {
                     _state.update { it.copy(issuer = issuer) }
                 }
             }
+            info.cardholderName?.let { name ->
+                if (_state.value.cardholderName.isBlank()) {
+                    _state.update { it.copy(cardholderName = name) }
+                }
+            }
+            info.variant?.let { variant ->
+                if (_state.value.variant.isBlank()) {
+                    _state.update { it.copy(variant = variant) }
+                }
+            }
+            info.product?.let { product ->
+                if (_state.value.product.isBlank()) {
+                    _state.update { it.copy(product = product) }
+                }
+            }
         }
     }
 
@@ -169,6 +203,9 @@ class AddCardViewModel : ViewModel() {
                 val card = Card(
                     nickname = s.nickname,
                     issuer = s.issuer,
+                    cardholderName = s.cardholderName,
+                    variant = s.variant,
+                    product = s.product,
                     cardNumber = s.cardNumber,
                     expiry = formattedExpiry,
                     cvv = s.cvv,

@@ -18,6 +18,7 @@ object DatabaseFactory {
             DB_NAME
         )
             .openHelperFactory(factory)
+            .addMigrations(AppDatabase.MIGRATION_1_2)
             .addCallback(seedCategories())
             .build()
     }

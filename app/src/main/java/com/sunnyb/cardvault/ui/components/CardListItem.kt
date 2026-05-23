@@ -60,11 +60,21 @@ fun CardListItem(
                         style = MaterialTheme.typography.labelSmall,
                         color = TextSecondary
                     )
-                    Text(
-                        text = "•••• ${card.cardNumber.takeLast(4)}",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = TextSecondary
-                    )
+                    Row {
+                        if (card.variant.isNotBlank()) {
+                            Text(
+                                text = card.variant,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = TextSecondary
+                            )
+                            Spacer(Modifier.width(8.dp))
+                        }
+                        Text(
+                            text = "•••• ${card.cardNumber.takeLast(4)}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextSecondary
+                        )
+                    }
                 }
                 Spacer(Modifier.height(4.dp))
                 Row(

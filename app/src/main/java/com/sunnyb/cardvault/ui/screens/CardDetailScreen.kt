@@ -209,6 +209,21 @@ fun CardDetailScreen(
                     showValue = showCvv,
                     onToggle = { showCvv = !showCvv }
                 )
+                if (card!!.cardholderName.isNotBlank()) {
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp),
+                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                    InfoRow("Cardholder", card!!.cardholderName)
+                }
+                if (card!!.variant.isNotBlank()) {
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp),
+                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                    InfoRow("Variant", card!!.variant)
+                }
+                if (card!!.product.isNotBlank()) {
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp),
+                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                    InfoRow("Product", card!!.product)
+                }
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp),
                     color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
                 InfoRow("Category", categoryName ?: "None")
