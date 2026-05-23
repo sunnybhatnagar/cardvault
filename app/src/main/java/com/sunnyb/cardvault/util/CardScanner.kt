@@ -44,16 +44,17 @@ object CardScanner {
 
             val texts = rawTexts.map { normalizeOcr(it) }
 
-            parseCardNumber(texts)?.let { number ->
-                ScannedCardInfo(
-                    cardNumber = number,
-                    expiry = parseExpiry(texts),
-                    issuer = parseIssuer(number),
-                    cardholderName = parseCardholderName(texts),
-                    variant = detectVariant(number),
-                    product = parseProduct(texts)
-                )
-            } ?: ScannedCardInfo()
+            val number = parseCardNumber(texts)
+            val expiry = parseExpiry(texts)
+
+            ScannedCardInfo(
+                cardNumber = number,
+                expiry = expiry,
+                issuer = detectIssuerFromText(rawTexts),
+                cardholderName = parseCardholderName(rawTexts),
+                variant = if (number != null) detectVariant(number) else null,
+                product = parseProduct(rawTexts)
+            )
         } catch (e: Exception) {
             ScannedCardInfo()
         }
@@ -139,6 +140,56 @@ object CardScanner {
         }
     }
 
+    private fun detectIssuerFromText(texts: List<String>): String? {
+        val combined = texts.joinToString(" ")
+        val upper = combined.uppercase()
+
+        val bankPatterns = listOf(
+            "ICICI BANK" to "ICICI Bank",
+            "HDFC BANK" to "HDFC Bank",
+            "AXIS BANK" to "Axis Bank",
+            "SBI" to "SBI",
+            "KOTAK MAHINDRA" to "Kotak Mahindra",
+            "YES BANK" to "Yes Bank",
+            "INDUSIND BANK" to "IndusInd Bank",
+            "RBL BANK" to "RBL Bank",
+            "FEDERAL BANK" to "Federal Bank",
+            "IDBI BANK" to "IDBI Bank",
+            "CANARA BANK" to "Canara Bank",
+            "PNB" to "PNB",
+            "BANK OF BARODA" to "Bank of Baroda",
+            "BOB" to "Bank of Baroda",
+            "UNION BANK" to "Union Bank",
+            "CITI" to "Citi",
+            "CITIBANK" to "Citi",
+            "HSBC" to "HSBC",
+            "CHASE" to "Chase",
+            "WELLS FARGO" to "Wells Fargo",
+            "AMERICAN EXPRESS" to "American Express",
+            "AMEX" to "American Express",
+            "DISCOVER" to "Discover",
+            "BARCLAYS" to "Barclays",
+            "CAPITAL ONE" to "Capital One",
+            "STANDARD CHARTERED" to "Standard Chartered"
+        )
+
+        for ((pattern, name) in bankPatterns) {
+            if (upper.contains(pattern)) return name
+        }
+
+        val singleBanks = listOf(
+            "ICICI", "HDFC", "AXIS", "KOTAK", "YES", "INDUSIND",
+            "RBL", "FEDERAL", "IDBI", "CANARA", "UNION", "CITI",
+            "HSBC", "CHASE", "BARCLAYS", "DISCOVER"
+        )
+        for (keyword in singleBanks) {
+            val regex = Regex("""\b${Regex.escape(keyword)}\b""", RegexOption.IGNORE_CASE)
+            if (regex.containsMatchIn(combined)) return keyword
+        }
+
+        return null
+    }
+
     private fun detectVariant(cardNumber: String): String? {
         return when {
             cardNumber.matches("^35(2[89]|[3-8][0-9]).*".toRegex()) -> "JCB"
@@ -161,6 +212,14 @@ object CardScanner {
             .replace(Regex("""www\.\S+"""), "")
             .replace(Regex("""\d{3,4}"""), "")
 
+        val bankWords = setOf(
+            "ICICI", "HDFC", "AXIS", "SBI", "KOTAK", "MAHINDRA",
+            "YES", "INDUSIND", "RBL", "FEDERAL", "IDBI", "CANARA",
+            "PNB", "BARODA", "BOB", "UNION", "CITI", "CITIBANK",
+            "HSBC", "CHASE", "WELLS", "FARGO", "AMEX", "DISCOVER",
+            "BARCLAYS", "CAPITAL", "ONE", "STANDARD", "CHARTERED"
+        )
+
         val knownWords = setOf(
             "VALID", "THRU", "CARDMEMBER", "SIGNATURE", "AUTHORIZED", "USE",
             "OF", "THIS", "CARD", "IS", "SUBJECT", "TO", "THE", "AGREEMENT",
@@ -170,21 +229,25 @@ object CardScanner {
             "BANK", "VISA", "MASTERCARD", "AMERICAN", "EXPRESS", "RUPAY",
             "DINERS", "CLUB", "JCB", "PLATINUM", "GOLD", "SIGNATURE",
             "INFINITE", "ELITE"
+        ) + bankWords + setOf(
+            "DEBIT", "CREDIT", "CLASSIC", "STANDARD", "PREMIER",
+            "CORPORATE", "BUSINESS", "EXECUTIVE", "REWARDS", "MILEAGE",
+            "TITANIUM", "SILVER", "BRONZE"
         )
 
         val tokens = cleaned.split(Regex("\\s+"))
         val isNameToken: (String) -> Boolean = { token ->
             token.length in 2..30 &&
-            token.all { c -> c.isUpperCase() || c == '.' } &&
-            token.uppercase() !in knownWords &&
-            !token.any { it.isDigit() }
+            token.all { it.isLetter() && it.isUpperCase() } &&
+            token !in knownWords
         }
 
         val sequences = mutableListOf<List<String>>()
         var current = mutableListOf<String>()
         for (token in tokens) {
-            if (isNameToken(token)) {
-                current.add(token)
+            val clean = token.replace(Regex("[^A-Za-z]"), "").uppercase()
+            if (clean.length in 2..30 && clean !in knownWords && clean.all { it.isLetter() }) {
+                current.add(clean)
             } else {
                 if (current.size >= 2) sequences.add(current.toList())
                 current = mutableListOf()
@@ -194,8 +257,9 @@ object CardScanner {
 
         if (sequences.isEmpty()) {
             for (token in tokens) {
-                if (isNameToken(token) && token.length >= 3) {
-                    return token
+                val clean = token.replace(Regex("[^A-Za-z]"), "").uppercase()
+                if (clean.length >= 3 && clean !in knownWords && clean.all { it.isLetter() }) {
+                    return clean
                 }
             }
             return null
@@ -211,19 +275,25 @@ object CardScanner {
             "RBL", "FEDERAL", "IDBI", "CANARA", "PNB", "BOB", "UNION",
             "CITI", "HSBC", "STANDARD", "CHARTERED", "AMEX", "AMERICAN",
             "CHASE", "WELLS", "FARGO", "BARCLAYS", "CAPITAL", "ONE",
-            "DISCOVER", "BANK", "OF", "AMERICA"
+            "DISCOVER"
         )
+        val skipWords = setOf("BANK", "OF", "THE", "AND", "FOR", "IN", "AT", "TO")
 
         val words = combined.split(Regex("\\s+"))
         for (i in words.indices) {
             if (words[i].uppercase() in knownIssuers) {
-                for (j in i + 1 until minOf(i + 4, words.size)) {
+                val issuerIdx = i
+                for (j in issuerIdx + 1 until minOf(issuerIdx + 5, words.size)) {
                     val candidate = words[j].replace(Regex("[^A-Za-z]"), "")
-                    if (candidate.length >= 3 && candidate[0].isUpperCase()) {
-                        val next = if (j + 1 < words.size && words[j + 1].length in 3..20
-                            && words[j + 1][0].isUpperCase()
-                            && words[j + 1].all { it.isLetter() }) {
-                            "$candidate ${words[j + 1]}"
+                    val upper = candidate.uppercase()
+                    if (candidate.length >= 3 && candidate[0].isUpperCase() && upper !in skipWords) {
+                        val next = if (j + 1 < words.size) {
+                            val nextWord = words[j + 1].replace(Regex("[^A-Za-z]"), "")
+                            if (nextWord.length in 3..20 && nextWord[0].isUpperCase()
+                                && nextWord.uppercase() !in skipWords
+                                && nextWord.all { it.isLetter() }) {
+                                "$candidate $nextWord"
+                            } else candidate
                         } else candidate
                         return next
                     }

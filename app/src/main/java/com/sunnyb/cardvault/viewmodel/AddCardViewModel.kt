@@ -156,7 +156,7 @@ class AddCardViewModel : ViewModel() {
     private fun scanCardImage(uri: Uri) {
         viewModelScope.launch {
             val info = CardScanner.scan(appContext, uri)
-            val hasResult = info.cardNumber != null || info.expiry != null || info.issuer != null
+            val hasResult = info.cardNumber != null || info.expiry != null || info.variant != null || info.issuer != null || info.cardholderName != null
             _state.update { it.copy(ocrFailed = !hasResult) }
 
             info.cardNumber?.let { number ->
