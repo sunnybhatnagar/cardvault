@@ -47,8 +47,6 @@ class MainActivity : FragmentActivity() {
 
         window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
 
-        val themePrefs = getSharedPreferences("cardvault_theme", MODE_PRIVATE)
-
         biometricAuth = BiometricAuth(this)
 
         lifecycle.addObserver(LifecycleEventObserver { _, event ->
