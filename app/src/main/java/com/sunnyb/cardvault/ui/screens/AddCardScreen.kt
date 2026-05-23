@@ -252,7 +252,7 @@ fun AddCardScreen(
                             contentColor = MaterialTheme.colorScheme.primary
                         ),
                         shape = RoundedCornerShape(12.dp),
-                        enabled = state.nickname.isNotBlank() && state.cardNumber.isNotBlank() && state.cardNumberError == null && state.issuer.isNotBlank() && state.cardholderName.isNotBlank() && state.cvv.isNotBlank() && state.cvvError == null
+                        enabled = state.nickname.isNotBlank() && state.cardNumber.isNotBlank() && state.cardNumberError == null && state.cvv.isNotBlank() && state.cvvError == null
                     ) {
                         if (state.isSaving) {
                             CircularProgressIndicator(
@@ -524,8 +524,8 @@ private fun StepCardDetails(
         Spacer(Modifier.height(16.dp))
 
         CardDetailField("Nickname", nickname, onNicknameChange)
-        CardDetailField("Issuer", issuer, onIssuerChange)
-        CardDetailField("Cardholder Name", cardholderName, onCardholderNameChange)
+        CardDetailField("Issuer (optional)", issuer, onIssuerChange)
+        CardDetailField("Cardholder Name (optional)", cardholderName, onCardholderNameChange)
         CardDetailField("Product (optional)", product, onProductChange)
 
         Spacer(Modifier.height(8.dp))

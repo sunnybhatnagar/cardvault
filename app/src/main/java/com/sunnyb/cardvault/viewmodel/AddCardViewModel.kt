@@ -175,7 +175,7 @@ class AddCardViewModel : ViewModel() {
     private fun scanCardImage(uri: Uri) {
         viewModelScope.launch {
             val info = CardScanner.scan(appContext, uri)
-            val hasResult = info.cardNumber != null || info.expiry != null || info.variant != null || info.issuer != null || info.cardholderName != null
+            val hasResult = info.cardNumber != null || info.expiry != null || info.variant != null
             _state.update { it.copy(ocrFailed = !hasResult, ocrDetectedTexts = info.detectedTexts) }
 
             info.cardNumber?.let { number ->
@@ -195,24 +195,9 @@ class AddCardViewModel : ViewModel() {
                     _state.update { it.copy(expiry = expiry) }
                 }
             }
-            info.issuer?.let { issuer ->
-                if (_state.value.issuer.isBlank()) {
-                    _state.update { it.copy(issuer = issuer) }
-                }
-            }
-            info.cardholderName?.let { name ->
-                if (_state.value.cardholderName.isBlank()) {
-                    _state.update { it.copy(cardholderName = name) }
-                }
-            }
             info.variant?.let { variant ->
                 if (_state.value.variant.isBlank()) {
                     _state.update { it.copy(variant = variant) }
-                }
-            }
-            info.product?.let { product ->
-                if (_state.value.product.isBlank()) {
-                    _state.update { it.copy(product = product) }
                 }
             }
         }
