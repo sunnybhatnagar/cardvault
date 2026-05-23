@@ -129,17 +129,6 @@ object CardScanner {
         return null
     }
 
-    private fun parseIssuer(cardNumber: String): String? {
-        return when {
-            cardNumber.startsWith("4") -> "Visa"
-            cardNumber.matches("^5[1-5].*".toRegex()) -> "Mastercard"
-            cardNumber.matches("^3[47].*".toRegex()) -> "Amex"
-            cardNumber.startsWith("6") -> "Discover"
-            cardNumber.matches("^35(2[89]|[3-8][0-9]).*".toRegex()) -> "JCB"
-            else -> null
-        }
-    }
-
     private fun detectIssuerFromText(texts: List<String>): String? {
         val combined = texts.joinToString(" ")
         val upper = combined.uppercase()
@@ -170,7 +159,8 @@ object CardScanner {
             "DISCOVER" to "Discover",
             "BARCLAYS" to "Barclays",
             "CAPITAL ONE" to "Capital One",
-            "STANDARD CHARTERED" to "Standard Chartered"
+            "STANDARD CHARTERED" to "Standard Chartered",
+            "BANK OF AMERICA" to "Bank of America"
         )
 
         for ((pattern, name) in bankPatterns) {
@@ -208,9 +198,10 @@ object CardScanner {
         val cleaned = combined
             .replace(Regex("""\d{13,19}"""), "")
             .replace(Regex("""\d{2}/\d{2,4}"""), "")
-            .replace(Regex("""https?://\S+"""), "")
-            .replace(Regex("""www\.\S+"""), "")
-            .replace(Regex("""\d{3,4}"""), "")
+            .replace(Regex("""https?://\S+""", RegexOption.IGNORE_CASE), "")
+            .replace(Regex("""www\.\S+""", RegexOption.IGNORE_CASE), "")
+            .replace(Regex("""[\d+.\-()]+"""), "")
+            .replace(Regex("""\b\d{3,4}\b"""), "")
 
         val bankWords = setOf(
             "ICICI", "HDFC", "AXIS", "SBI", "KOTAK", "MAHINDRA",
@@ -221,14 +212,15 @@ object CardScanner {
         )
 
         val knownWords = setOf(
-            "VALID", "THRU", "CARDMEMBER", "SIGNATURE", "AUTHORIZED", "USE",
+            "VALID", "THRU", "CARDMEMBER", "CARDHOLDER", "SIGNATURE", "AUTHORIZED", "USE",
             "OF", "THIS", "CARD", "IS", "SUBJECT", "TO", "THE", "AGREEMENT",
             "FOR", "ASSISTANCE", "IN", "TOLL", "FREE", "HELPLINE",
             "INTERNATIONAL", "CUSTOMERS", "NOT", "PAYMENT", "FOREIGN",
-            "EXCHANGE", "NEPAL", "BHUTAN", "WORLD", "EMERALDE", "PRIVATE",
+            "EXCHANGE", "NEPAL", "BHUTAN", "INDIA",
+            "WORLD", "EMERALDE", "PRIVATE",
             "BANK", "VISA", "MASTERCARD", "AMERICAN", "EXPRESS", "RUPAY",
             "DINERS", "CLUB", "JCB", "PLATINUM", "GOLD", "SIGNATURE",
-            "INFINITE", "ELITE"
+            "INFINITE", "ELITE", "WWW", "COM"
         ) + bankWords + setOf(
             "DEBIT", "CREDIT", "CLASSIC", "STANDARD", "PREMIER",
             "CORPORATE", "BUSINESS", "EXECUTIVE", "REWARDS", "MILEAGE",
@@ -236,12 +228,6 @@ object CardScanner {
         )
 
         val tokens = cleaned.split(Regex("\\s+"))
-        val isNameToken: (String) -> Boolean = { token ->
-            token.length in 2..30 &&
-            token.all { it.isLetter() && it.isUpperCase() } &&
-            token !in knownWords
-        }
-
         val sequences = mutableListOf<List<String>>()
         var current = mutableListOf<String>()
         for (token in tokens) {
