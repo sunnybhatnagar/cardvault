@@ -270,7 +270,8 @@ object CardScanner {
             "WORLD", "EMERALDE", "PRIVATE",
             "BANK", "VISA", "MASTERCARD", "AMERICAN", "EXPRESS", "RUPAY",
             "DINERS", "CLUB", "JCB", "PLATINUM", "GOLD", "SIGNATURE",
-            "INFINITE", "ELITE", "WWW", "COM"
+            "INFINITE", "ELITE", "WWW", "COM",
+            "MONTH", "YEAR", "DATE", "FROM", "MOBILO", "MOBILE"
         ) + bankWords + setOf(
             "DEBIT", "CREDIT", "CLASSIC", "STANDARD", "PREMIER",
             "CORPORATE", "BUSINESS", "EXECUTIVE", "REWARDS", "MILEAGE",
@@ -313,7 +314,7 @@ object CardScanner {
             "CHASE", "WELLS", "FARGO", "BARCLAYS", "CAPITAL", "ONE",
             "DISCOVER"
         )
-        val skipWords = setOf("BANK", "OF", "THE", "AND", "FOR", "IN", "AT", "TO")
+        val skipWords = setOf("BANK", "OF", "THE", "AND", "FOR", "IN", "AT", "TO", "CARD")
 
         val words = combined.split(Regex("\\s+"))
         for (i in words.indices) {
