@@ -52,10 +52,27 @@ object CardScanner {
     }
 
     private fun parseCardNumber(texts: List<String>): String? {
+        for (text in texts) {
+            val cleaned = text.filter { it.isDigit() || it == ' ' }
+            Regex("""\d{13,19}""").findAll(cleaned.replace(" ", ""))
+                .maxByOrNull { it.value.length }?.value?.let { return it }
+        }
+
         val combined = texts.joinToString(" ")
         val cleaned = combined.filter { it.isDigit() || it == ' ' }
-        val digitGroups = Regex("""\d{13,19}""").findAll(cleaned.replace(" ", ""))
-        return digitGroups.toList().maxByOrNull { it.value.length }?.value
+        val normalized = cleaned.replace(Regex("\\s+"), " ").trim()
+        val groups = normalized.split(" ").filter { it.length >= 4 }
+
+        for (i in groups.indices) {
+            var concat = groups[i]
+            if (concat.length in 13..19) return concat
+            for (j in i + 1 until groups.size) {
+                concat += groups[j]
+                if (concat.length in 13..19) return concat
+                if (concat.length > 19) break
+            }
+        }
+        return null
     }
 
     private fun parseExpiry(texts: List<String>): String? {
