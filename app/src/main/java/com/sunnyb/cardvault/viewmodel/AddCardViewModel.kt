@@ -8,7 +8,6 @@ import androidx.lifecycle.viewModelScope
 import com.sunnyb.cardvault.CardVaultApp
 import com.sunnyb.cardvault.data.db.entity.Card
 import com.sunnyb.cardvault.data.db.entity.Category
-import com.sunnyb.cardvault.util.CardScanner
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
