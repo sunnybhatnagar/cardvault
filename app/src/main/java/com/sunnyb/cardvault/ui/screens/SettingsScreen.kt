@@ -506,6 +506,31 @@ fun SettingsScreen(
                 title = { Text("What's New") },
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("v1.4 — May 2026", fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary)
+                        Text("•  Cardholder name, variant/network, product fields added",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface)
+                        Text("•  OCR detects issuer bank, cardholder name, product from card text",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface)
+                        Text("•  Variant auto-detected from BIN with manual dropdown override",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface)
+                        Text("•  CVV validation — 3 digits (most cards), 4 digits (Amex), mandatory",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface)
+                        Text("•  Duplicate card detection at scan time with block",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface)
+                        Text("•  Back image scanned for card number/expiry",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface)
+
+                        Spacer(Modifier.height(12.dp))
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                        Spacer(Modifier.height(8.dp))
+
                         Text("v1.3 — May 2026", fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary)
                         Text("•  OCR accuracy improvements — embossed card numbers read correctly",
