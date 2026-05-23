@@ -2,14 +2,14 @@
 
 ## Short Description (80 chars max)
 
-Encrypted card storage with biometric lock. Photos, OCR, offline.
+Encrypted card storage with biometric lock. Photos, offline.
 
 ## Full Description
 
 Card Vault keeps your credit and debit cards safely encrypted on your phone. No accounts, no cloud, no tracking — just you and your cards.
 
-**Snap & Go**
-Take a photo of your card and details are auto-filled using on-device OCR. Your camera roll is never accessed without permission.
+**Snap & Store**
+Take front and back photos of your card. Images are encrypted before they hit storage. Your camera roll is never accessed without permission.
 
 **AES-256 Encrypted**
 Every card photo is encrypted with AES-256-GCM. The database uses SQLCipher. Keys live in the Android Keystore. Nothing leaves your device.

@@ -90,7 +90,7 @@ fun AboutScreen(onBack: () -> Unit) {
                 shape = RoundedCornerShape(20.dp),
                 color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
             ) {
-                Text("🔒 AES-256 encrypted · on-device only · no tracking",
+                Text("AES-256 encrypted · on-device only · no tracking",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp))
@@ -153,7 +153,7 @@ fun AboutScreen(onBack: () -> Unit) {
             Spacer(Modifier.height(16.dp))
 
             Text(
-                text = "Built with Jetpack Compose · Material 3 · SQLCipher · ML Kit",
+                text = "Built with Jetpack Compose · Material 3 · SQLCipher",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,

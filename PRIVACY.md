@@ -1,6 +1,6 @@
 # Card Vault Privacy Policy
 
-**Last updated:** May 22, 2026
+**Last updated:** May 23, 2026
 
 ## Summary
 

@@ -196,26 +196,6 @@ fun SettingsScreen(
 
         Spacer(Modifier.height(12.dp))
 
-        SettingsCard(onClick = onAboutClick) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text("About Card Vault", style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface)
-                    Text("Version 1.0 · Developer · Legal",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                Icon(Icons.Default.Info, contentDescription = "About",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        }
-
-        Spacer(Modifier.height(12.dp))
-
         SettingsCard(onClick = { showPrivacy = true }) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -232,6 +212,12 @@ fun SettingsScreen(
                 Icon(Icons.Default.Security, contentDescription = "Privacy", tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
+
+        Spacer(Modifier.height(24.dp))
+
+        Text("Appearance", style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface)
 
         Spacer(Modifier.height(12.dp))
 
@@ -280,7 +266,7 @@ fun SettingsScreen(
                     }
                 }
                 if (exportState is SettingsViewModel.ExportState.Exporting) {
-                    Text("⏳", style = MaterialTheme.typography.titleLarge)
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.primary)
                 } else {
                     Icon(Icons.Default.Upload, contentDescription = "Export", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
@@ -305,7 +291,7 @@ fun SettingsScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 if (restoreState is SettingsViewModel.RestoreState.Restoring) {
-                    Text("⏳", style = MaterialTheme.typography.titleLarge)
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.primary)
                 } else {
                     Icon(Icons.Default.Download, contentDescription = "Restore", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
@@ -338,7 +324,7 @@ fun SettingsScreen(
                     Text(sub, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 if (driveState is SettingsViewModel.DriveState.BackingUp) {
-                    Text("⏳", style = MaterialTheme.typography.titleLarge)
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.primary)
                 } else {
                     Icon(
                         if (DriveBackupService.isSignedIn(context)) Icons.Default.Cloud else Icons.Default.Link,
@@ -375,7 +361,7 @@ fun SettingsScreen(
                     Text(sub, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 if (driveState is SettingsViewModel.DriveState.Restoring) {
-                    Text("⏳", style = MaterialTheme.typography.titleLarge)
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.primary)
                 } else {
                     Icon(
                         if (DriveBackupService.isSignedIn(context)) Icons.Default.Cloud else Icons.Default.Link,
@@ -450,6 +436,26 @@ fun SettingsScreen(
             }
         }
 
+        Spacer(Modifier.height(12.dp))
+
+        SettingsCard(onClick = onAboutClick) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text("About Card Vault", style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface)
+                    Text("Version 1.4 · Developer · Legal",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Icon(Icons.Default.Info, contentDescription = "About",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+
         if (showPrivacy) {
             AlertDialog(
                 onDismissRequest = { showPrivacy = false },
@@ -476,7 +482,7 @@ fun SettingsScreen(
                             "Photos captured only when you tap capture.",
                             "",
                             "THIRD-PARTY",
-                            "• ML Kit for on-device OCR (offline)",
+                            "No third-party services process your data",
                             "• Drive API only on explicit sign-in",
                             "",
                             "Last updated: May 22, 2026"
@@ -508,22 +514,31 @@ fun SettingsScreen(
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text("v1.4 — May 2026", fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary)
-                        Text("•  Cardholder name, variant/network, product fields added",
+                        Text("•  Manual entry — type card details yourself, no OCR",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurface)
-                        Text("•  OCR detects issuer bank, cardholder name, product from card text",
+                        Text("•  All fields optional except nickname — capture images, fill later",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface)
+                        Text("•  Cardholder name, variant/network, product fields added",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurface)
                         Text("•  Variant auto-detected from BIN with manual dropdown override",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurface)
-                        Text("•  CVV validation — 3 digits (most cards), 4 digits (Amex), mandatory",
+                        Text("•  CVV validation — 3 digits (most cards), 4 digits (Amex), optional",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurface)
-                        Text("•  Duplicate card detection at scan time with block",
+                        Text("•  Duplicate card detection blocks save of existing card number",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurface)
-                        Text("•  Back image scanned for card number/expiry",
+                        Text("•  Pinch-to-zoom on card detail photos",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface)
+                        Text("•  EXIF auto-rotation for portrait/landscape photos",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface)
+                        Text("•  Actual front photo displayed (not styled card UI)",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurface)
 

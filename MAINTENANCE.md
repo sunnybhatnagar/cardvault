@@ -83,5 +83,4 @@ Output APKs are in `app/build/outputs/apk/release/`:
 |---------|-----|
 | "App not installed" on update | Keystore mismatch or versionCode not incremented |
 | Room crash after update | Missing migration for schema change |
-| OCR not working | Check ML Kit model downloaded (requires internet on first use) |
 | Biometric not showing | Device may lack biometric hardware; uses PIN/pattern fallback |

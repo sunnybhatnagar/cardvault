@@ -7,7 +7,6 @@
   <img src="https://img.shields.io/badge/Jetpack_Compose-4285F4?style=flat-square&logo=jetpackcompose&logoColor=white" />
   <img src="https://img.shields.io/badge/Material_3-00BBBB?style=flat-square&logo=materialdesign&logoColor=white" />
   <img src="https://img.shields.io/badge/SQLCipher-003B57?style=flat-square&logo=sqlite&logoColor=white" />
-  <img src="https://img.shields.io/badge/ML_Kit-FF6D00?style=flat-square&logo=google&logoColor=white" />
   <img src="https://img.shields.io/badge/minSdk-28-4CAF50?style=flat-square" />
   <img src="https://img.shields.io/badge/targetSdk-34-4CAF50?style=flat-square" />
 </p>
@@ -19,7 +18,7 @@
 </p>
 
 <p align="center">
-  <b>AES-256 encrypted</b> · <b>biometric lock</b> · <b>on-device OCR</b> · <b>offline-first</b>
+  <b>AES-256 encrypted</b> · <b>biometric lock</b> · <b>photo capture</b> · <b>offline-first</b>
 </p>
 
 ---
@@ -31,7 +30,7 @@ Card Vault keeps your credit and debit cards safely encrypted on your phone. No 
 | | |
 |---|---|
 | 🔒 **AES-256 Encryption** | Every card photo encrypted with AES-256-GCM. Database secured with SQLCipher. Keys in Android Keystore. |
-| 📸 **OCR Scanning** | Take a photo — card number, expiry, and issuer auto-fill via on-device ML Kit. No data leaves your phone. |
+| 📸 **Photo Capture** | Take front and back card photos. Images stored encrypted with EXIF rotation correction. Pinch-to-zoom in detail view. |
 | 🧬 **Biometric Lock** | Fingerprint, face, or PIN unlock. Configurable auto-lock. Screenshots blocked on card details. |
 | 💳 **Card Flip** | Tap to flip between front and back card photos with 3D animation. |
 | 📂 **Categories** | Organize cards into custom groups. Search by name, issuer, or number. |
@@ -63,7 +62,6 @@ Card Vault keeps your credit and debit cards safely encrypted on your phone. No 
 | **Database** | Room + SQLCipher (AES-256 encrypted) |
 | **Encryption** | Android Security Crypto (EncryptedFile, EncryptedSharedPreferences) |
 | **Auth** | Android Biometric API (fingerprint, face, PIN) |
-| **OCR** | Google ML Kit Text Recognition (on-device) |
 | **Image Loading** | Coil |
 | **Backup** | Google Drive API (optional) |
 | **Analytics** | None |
