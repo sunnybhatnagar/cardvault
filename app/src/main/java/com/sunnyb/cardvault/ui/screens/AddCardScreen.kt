@@ -236,7 +236,7 @@ fun AddCardScreen(
                             contentColor = MaterialTheme.colorScheme.primary
                         ),
                         shape = RoundedCornerShape(12.dp),
-                        enabled = state.nickname.isNotBlank() && state.cardNumber.isNotBlank() && state.cardNumberError == null && state.cvv.isNotBlank() && state.cvvError == null
+                        enabled = state.nickname.isNotBlank()
                     ) {
                         if (state.isSaving) {
                             CircularProgressIndicator(
@@ -542,8 +542,7 @@ private fun StepCardDetails(
         CardDetailField("Expiry (MM/YY)", expiry, onExpiryChange,
             keyboardType = KeyboardType.Number,
             visualTransformation = ExpiryTransformation)
-        val cvvDigits = if (variant == "American Express") "4 digits" else "3 digits"
-        CardDetailField("CVV ($cvvDigits)", cvv, onCvvChange,
+        CardDetailField("CVV", cvv, onCvvChange,
             keyboardType = KeyboardType.Number, error = cvvError)
 
         Spacer(Modifier.height(16.dp))

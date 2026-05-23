@@ -175,14 +175,8 @@ class AddCardViewModel : ViewModel() {
             _state.update { it.copy(isSaving = true) }
 
             try {
-                val expectedCvvLen = if (s.variant == "American Express") 4 else 3
-                if (s.cvv.length != expectedCvvLen) {
-                    _state.update { it.copy(isSaving = false, cvvError = "CVV must be $expectedCvvLen digits") }
-                    return@launch
-                }
-
                 val existing = cardRepository.getCardByCardNumber(s.cardNumber)
-                if (existing != null && existing.id != editCardId) {
+                if (s.cardNumber.isNotBlank() && existing != null && existing.id != editCardId) {
                     _state.update { it.copy(isSaving = false, cardNumberError = "Card already saved as \"${existing.nickname}\"") }
                     return@launch
                 }
@@ -312,8 +306,8 @@ class AddCardViewModel : ViewModel() {
             }
         }
 
-        val cropMarginX = (bitmap.width * 0.10f).toInt()
-        val cropMarginY = (bitmap.height * 0.10f).toInt()
+        val cropMarginX = (bitmap.width * 0.18f).toInt()
+        val cropMarginY = (bitmap.height * 0.18f).toInt()
         if (cropMarginX > 0 && cropMarginY > 0 && cropMarginX * 2 < bitmap.width && cropMarginY * 2 < bitmap.height) {
             val cropped = Bitmap.createBitmap(bitmap, cropMarginX, cropMarginY,
                 bitmap.width - cropMarginX * 2, bitmap.height - cropMarginY * 2)

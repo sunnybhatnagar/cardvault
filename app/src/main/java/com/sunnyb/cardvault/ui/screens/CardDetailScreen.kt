@@ -4,6 +4,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,6 +24,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import android.widget.Toast
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
@@ -48,6 +50,9 @@ fun CardDetailScreen(
     var showCardNumber by remember { mutableStateOf(false) }
     var showCvv by remember { mutableStateOf(false) }
     var isFlipped by remember { mutableStateOf(false) }
+    var zoomScale by remember { mutableFloatStateOf(1f) }
+    var zoomOffsetX by remember { mutableFloatStateOf(0f) }
+    var zoomOffsetY by remember { mutableFloatStateOf(0f) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
     val density = LocalDensity.current
     val context = LocalContext.current
@@ -140,15 +145,29 @@ fun CardDetailScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(200.dp)
+                    .height(250.dp)
                     .graphicsLayer {
                         rotationY = flipRotation
                         cameraDistance = 12f * density.density
+                        scaleX = zoomScale
+                        scaleY = zoomScale
+                        translationX = zoomOffsetX
+                        translationY = zoomOffsetY
+                    }
+                    .pointerInput(Unit) {
+                        detectTransformGestures { _, pan, zoom, _ ->
+                            zoomScale = (zoomScale * zoom).coerceIn(1f, 5f)
+                            zoomOffsetX = (zoomOffsetX + pan.x * zoomScale).coerceIn(-500f, 500f)
+                            zoomOffsetY = (zoomOffsetY + pan.y * zoomScale).coerceIn(-500f, 500f)
+                        }
                     }
                     .clickable {
                         if (card!!.backImagePath != null) {
                             if (!isFlipped) viewModel.loadBackImage()
                             isFlipped = !isFlipped
+                            zoomScale = 1f
+                            zoomOffsetX = 0f
+                            zoomOffsetY = 0f
                         }
                     },
                 contentAlignment = Alignment.Center
