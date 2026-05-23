@@ -184,6 +184,23 @@ fun AddCardScreen(
                 }
             }
 
+            val duplicateError = state.cardNumberError
+            if (duplicateError != null && duplicateError.startsWith("Card already saved")) {
+                Spacer(Modifier.height(8.dp))
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.error.copy(alpha = 0.1f),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = duplicateError,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(12.dp)
+                    )
+                }
+            }
+
             Spacer(Modifier.height(24.dp))
 
             Row(

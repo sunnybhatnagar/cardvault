@@ -136,6 +136,14 @@ class AddCardViewModel : ViewModel() {
             "Invalid card number"
         } else null
         _state.update { it.copy(cardNumber = digitsOnly, cardNumberError = error) }
+        if (digitsOnly.length >= 13 && error == null) {
+            viewModelScope.launch {
+                val existing = cardRepository.getCardByCardNumber(digitsOnly)
+                if (existing != null && existing.id != editCardId) {
+                    _state.update { it.copy(cardNumberError = "Card already saved as \"${existing.nickname}\"") }
+                }
+            }
+        }
     }
 
     fun updateExpiry(value: String) {
@@ -173,6 +181,12 @@ class AddCardViewModel : ViewModel() {
                 if (_state.value.cardNumber.isBlank()) {
                     _state.update { it.copy(cardNumber = number) }
                     updateCardNumber(number)
+                    val existing = cardRepository.getCardByCardNumber(number)
+                    if (existing != null && existing.id != editCardId) {
+                        val msg = "Card already saved as \"${existing.nickname}\""
+                        _state.update { it.copy(cardNumberError = msg) }
+                        _error.value = msg
+                    }
                 }
             }
             info.expiry?.let { expiry ->
