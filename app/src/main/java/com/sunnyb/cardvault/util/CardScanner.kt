@@ -38,19 +38,29 @@ object CardScanner {
 
             if (result == null) return@withContext ScannedCardInfo()
 
-            val allText = result.textBlocks.map { it.text }
-            Log.d("CardScanner", "ML Kit recognized text blocks: $allText")
+            val rawTexts = result.textBlocks.map { it.text }
+            Log.d("CardScanner", "ML Kit recognized text blocks: $rawTexts")
 
-            parseCardNumber(allText)?.let { number ->
+            val texts = rawTexts.map { normalizeOcr(it) }
+
+            parseCardNumber(texts)?.let { number ->
                 ScannedCardInfo(
                     cardNumber = number,
-                    expiry = parseExpiry(allText),
+                    expiry = parseExpiry(texts),
                     issuer = parseIssuer(number)
                 )
             } ?: ScannedCardInfo()
         } catch (e: Exception) {
             ScannedCardInfo()
         }
+    }
+
+    private fun normalizeOcr(text: String): String {
+        return text
+            .replace('l', '1')
+            .replace('I', '1')
+            .replace('O', '0')
+            .replace('o', '0')
     }
 
     private fun parseCardNumber(texts: List<String>): String? {
@@ -101,7 +111,17 @@ object CardScanner {
                 if (mm in 1..12) "$mm/$yy" else null
             }
         }
-        return digitPairs.firstOrNull()
+        digitPairs.firstOrNull()?.let { return it }
+
+        for (text in texts) {
+            Regex("""(\d{1})\s*/\s*(\d{2})""").findAll(text).forEach {
+                val mm = it.groupValues[1].toIntOrNull() ?: 0
+                val yy = it.groupValues[2]
+                if (mm in 1..9) return "0$mm/$yy"
+            }
+        }
+
+        return null
     }
 
     private fun parseIssuer(cardNumber: String): String? {
