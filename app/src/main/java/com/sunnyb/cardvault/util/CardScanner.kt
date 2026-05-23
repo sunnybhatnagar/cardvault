@@ -302,7 +302,7 @@ object CardScanner {
             return null
         }
 
-        return sequences.maxByOrNull { it.sumOf { w -> w.length } }?.joinToString(" ")
+        return sequences.lastOrNull()?.joinToString(" ")
     }
 
     private fun parseProduct(texts: List<String>): String? {
