@@ -16,6 +16,9 @@ class CardRepository(private val cardDao: CardDao) {
 
     suspend fun getCardById(id: Long): Card? = cardDao.getCardById(id)
 
+    suspend fun getCardByCardNumber(cardNumber: String): Card? =
+        cardDao.getCardByCardNumber(cardNumber)
+
     suspend fun getCardCountForCategory(categoryId: Long): Int =
         cardDao.getCardCountForCategory(categoryId)
 

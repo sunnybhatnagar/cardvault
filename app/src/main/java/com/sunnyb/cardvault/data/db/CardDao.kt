@@ -24,6 +24,9 @@ interface CardDao {
     @Query("SELECT * FROM card WHERE id = :id")
     suspend fun getCardById(id: Long): Card?
 
+    @Query("SELECT * FROM card WHERE cardNumber = :cardNumber LIMIT 1")
+    suspend fun getCardByCardNumber(cardNumber: String): Card?
+
     @Query("SELECT COUNT(*) FROM card WHERE categoryId = :categoryId")
     suspend fun getCardCountForCategory(categoryId: Long): Int
 

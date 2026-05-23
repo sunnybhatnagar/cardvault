@@ -153,6 +153,7 @@ fun AddCardScreen(
                         cardNumberError = state.cardNumberError,
                         expiry = state.expiry,
                         cvv = state.cvv,
+                        cvvError = state.cvvError,
                         categories = state.categories,
                         selectedCategoryId = state.categoryId,
                         onNicknameChange = { viewModel.updateNickname(it) },
@@ -228,7 +229,7 @@ fun AddCardScreen(
                             contentColor = MaterialTheme.colorScheme.primary
                         ),
                         shape = RoundedCornerShape(12.dp),
-                        enabled = state.nickname.isNotBlank() && state.cardNumber.isNotBlank() && state.cardNumberError == null && state.issuer.isNotBlank() && state.cardholderName.isNotBlank()
+                        enabled = state.nickname.isNotBlank() && state.cardNumber.isNotBlank() && state.cardNumberError == null && state.issuer.isNotBlank() && state.cardholderName.isNotBlank() && state.cvv.isNotBlank() && state.cvvError == null
                     ) {
                         if (state.isSaving) {
                             CircularProgressIndicator(
@@ -452,6 +453,7 @@ private fun StepCardDetails(
     cardNumberError: String?,
     expiry: String,
     cvv: String,
+    cvvError: String?,
     categories: List<com.sunnyb.cardvault.data.db.entity.Category>,
     selectedCategoryId: Long?,
     onNicknameChange: (String) -> Unit,
@@ -531,8 +533,9 @@ private fun StepCardDetails(
         CardDetailField("Expiry (MM/YY)", expiry, onExpiryChange,
             keyboardType = KeyboardType.Number,
             visualTransformation = ExpiryTransformation)
-        CardDetailField("CVV", cvv, onCvvChange,
-            keyboardType = KeyboardType.Number)
+        val cvvDigits = if (variant == "American Express") "4 digits" else "3 digits"
+        CardDetailField("CVV ($cvvDigits)", cvv, onCvvChange,
+            keyboardType = KeyboardType.Number, error = cvvError)
 
         Spacer(Modifier.height(16.dp))
 

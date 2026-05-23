@@ -31,6 +31,7 @@ data class AddCardUiState(
     val cardNumberError: String? = null,
     val expiry: String = "",
     val cvv: String = "",
+    val cvvError: String? = null,
     val categoryId: Long? = null,
     val categories: List<Category> = emptyList(),
     val isSaving: Boolean = false,
@@ -117,7 +118,12 @@ class AddCardViewModel : ViewModel() {
     }
 
     fun updateVariant(value: String) {
-        _state.update { it.copy(variant = value) }
+        val maxDigits = if (value == "American Express") 4 else 3
+        val currentCvv = _state.value.cvv
+        val trimmedCvv = currentCvv.take(maxDigits)
+        val cvvError = if (trimmedCvv.length == maxDigits || trimmedCvv.isBlank()) null
+            else "CVV must be $maxDigits digits for $value"
+        _state.update { it.copy(variant = value, cvv = trimmedCvv, cvvError = cvvError) }
     }
 
     fun updateProduct(value: String) {
@@ -137,8 +143,12 @@ class AddCardViewModel : ViewModel() {
     }
 
     fun updateCvv(value: String) {
-        val digitsOnly = value.filter { it.isDigit() }.take(4)
-        _state.update { it.copy(cvv = digitsOnly) }
+        val variant = _state.value.variant
+        val maxDigits = if (variant == "American Express") 4 else 3
+        val digitsOnly = value.filter { it.isDigit() }.take(maxDigits)
+        val cvvError = if (digitsOnly.length == maxDigits || digitsOnly.isBlank()) null
+            else "CVV must be $maxDigits digits"
+        _state.update { it.copy(cvv = digitsOnly, cvvError = cvvError) }
     }
 
     fun updateCategory(id: Long?) {
@@ -199,6 +209,18 @@ class AddCardViewModel : ViewModel() {
             _state.update { it.copy(isSaving = true) }
 
             try {
+                val expectedCvvLen = if (s.variant == "American Express") 4 else 3
+                if (s.cvv.length != expectedCvvLen) {
+                    _state.update { it.copy(isSaving = false, cvvError = "CVV must be $expectedCvvLen digits") }
+                    return@launch
+                }
+
+                val existing = cardRepository.getCardByCardNumber(s.cardNumber)
+                if (existing != null && existing.id != editCardId) {
+                    _state.update { it.copy(isSaving = false, cardNumberError = "Card already saved as \"${existing.nickname}\"") }
+                    return@launch
+                }
+
                 val formattedExpiry = if (s.expiry.length == 4) "${s.expiry.take(2)}/${s.expiry.drop(2)}" else s.expiry
                 val card = Card(
                     nickname = s.nickname,
