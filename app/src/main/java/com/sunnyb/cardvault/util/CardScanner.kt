@@ -92,7 +92,8 @@ object CardScanner {
             val cleaned = text.filter { it.isDigit() || it == ' ' }
             Regex("""\d{13,19}""").findAll(cleaned.replace(" ", ""))
                 .maxByOrNull { it.value.length }?.value?.let {
-                    if (isValidCardNumber(it)) return it
+                    val corrected = correctOcrErrors(it)
+                    if (corrected != null) return corrected
                 }
         }
 
@@ -106,26 +107,24 @@ object CardScanner {
 
         for (i in sameLenGroups.indices) {
             var concat = sameLenGroups[i]
-            if (concat.length in 13..19 && isValidCardNumber(concat)) return concat
+            val corrected = correctOcrErrors(concat)
+            if (corrected != null) return corrected
             for (j in i + 1 until sameLenGroups.size) {
                 concat += sameLenGroups[j]
-                if (concat.length in 13..19) {
-                    if (isValidCardNumber(concat)) return concat
-                    break
-                }
+                val c = correctOcrErrors(concat)
+                if (c != null) return c
                 if (concat.length > 19) break
             }
         }
 
         for (i in groups.indices) {
             var concat = groups[i]
-            if (concat.length in 13..19 && isValidCardNumber(concat)) return concat
+            val corrected = correctOcrErrors(concat)
+            if (corrected != null) return corrected
             for (j in i + 1 until groups.size) {
                 concat += groups[j]
-                if (concat.length in 13..19) {
-                    if (isValidCardNumber(concat)) return concat
-                    break
-                }
+                val c = correctOcrErrors(concat)
+                if (c != null) return c
                 if (concat.length > 19) break
             }
         }
@@ -136,7 +135,65 @@ object CardScanner {
         if (digits.any { !it.isDigit() }) return false
         val first = digits.first()
         if (first !in listOf('3', '4', '5', '6')) return false
-        return digits.length in 13..19
+        if (digits.length < 13 || digits.length > 19) return false
+        return passesLuhn(digits)
+    }
+
+    private fun passesLuhn(digits: String): Boolean {
+        var sum = 0
+        var alternate = false
+        for (i in digits.indices.reversed()) {
+            var n = digits[i] - '0'
+            if (alternate) {
+                n *= 2
+                if (n > 9) n -= 9
+            }
+            sum += n
+            alternate = !alternate
+        }
+        return sum % 10 == 0
+    }
+
+    private fun correctOcrErrors(digits: String): String? {
+        if (digits.length < 13 || digits.length > 19) return null
+        if (isValidCardNumber(digits)) return digits
+
+        val confusionMap = mapOf(
+            '0' to "86", '8' to "096", '6' to "05",
+            '1' to "7", '7' to "1",
+            '3' to "89", '9' to "538",
+            '5' to "69", '4' to "", '2' to ""
+        )
+
+        val best = mutableListOf<Triple<Int, Char, Char>>()
+        for (i in digits.indices) {
+            val original = digits[i]
+            val alternatives = confusionMap[original] ?: ""
+            for (alt in alternatives) {
+                val candidate = digits.substring(0, i) + alt + digits.substring(i + 1)
+                if (candidate.length in 13..19 && passesLuhn(candidate) && candidate.first() in listOf('3', '4', '5', '6')) {
+                    best.add(Triple(i, original, alt))
+                }
+            }
+        }
+
+        if (best.size == 1) {
+            val (idx, _, alt) = best.first()
+            return digits.substring(0, idx) + alt + digits.substring(idx + 1)
+        }
+
+        if (best.size > 1) {
+            for (attempt in best) {
+                val (idx, _, alt) = attempt
+                val corrected = digits.substring(0, idx) + alt + digits.substring(idx + 1)
+                val existing = corrected.substring(0, 6)
+                if (existing.startsWith("4") || existing.matches("^5[1-5]".toRegex()) || existing.matches("^3[47]".toRegex())) {
+                    return corrected
+                }
+            }
+        }
+
+        return null
     }
 
     private fun parseExpiry(texts: List<String>): String? {
