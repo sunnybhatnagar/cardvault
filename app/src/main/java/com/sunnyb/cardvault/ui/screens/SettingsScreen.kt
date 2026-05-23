@@ -506,6 +506,22 @@ fun SettingsScreen(
                 title = { Text("What's New") },
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("v1.3 — May 2026", fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary)
+                        Text("•  OCR accuracy improvements — embossed card numbers read correctly",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface)
+                        Text("•  Expiry date auto-fill fix for OCR-read cards",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface)
+                        Text("•  Two-pass OCR parsing for reliable card number detection",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface)
+
+                        Spacer(Modifier.height(12.dp))
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                        Spacer(Modifier.height(8.dp))
+
                         Text("v1.2 — May 2026", fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary)
                         Text("•  Grid/List view toggle on Home screen",
