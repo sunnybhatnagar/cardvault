@@ -72,7 +72,9 @@ object CardScanner {
         for (text in texts) {
             val cleaned = text.filter { it.isDigit() || it == ' ' }
             Regex("""\d{13,19}""").findAll(cleaned.replace(" ", ""))
-                .maxByOrNull { it.value.length }?.value?.let { return it }
+                .maxByOrNull { it.value.length }?.value?.let {
+                    if (isValidCardNumber(it)) return it
+                }
         }
 
         val combined = texts.joinToString(" ")
@@ -80,33 +82,81 @@ object CardScanner {
         val normalized = cleaned.replace(Regex("\\s+"), " ").trim()
         val groups = normalized.split(" ").filter { it.length >= 4 }
 
+        val commonLength = groups.groupBy { it.length }.maxByOrNull { it.value.size }?.key ?: 4
+        val sameLenGroups = groups.filter { it.length == commonLength }
+
+        for (i in sameLenGroups.indices) {
+            var concat = sameLenGroups[i]
+            if (concat.length in 13..19 && isValidCardNumber(concat)) return concat
+            for (j in i + 1 until sameLenGroups.size) {
+                concat += sameLenGroups[j]
+                if (concat.length in 13..19) {
+                    if (isValidCardNumber(concat)) return concat
+                    break
+                }
+                if (concat.length > 19) break
+            }
+        }
+
         for (i in groups.indices) {
             var concat = groups[i]
-            if (concat.length in 13..19) return concat
+            if (concat.length in 13..19 && isValidCardNumber(concat)) return concat
             for (j in i + 1 until groups.size) {
                 concat += groups[j]
-                if (concat.length in 13..19) return concat
+                if (concat.length in 13..19) {
+                    if (isValidCardNumber(concat)) return concat
+                    break
+                }
                 if (concat.length > 19) break
             }
         }
         return null
     }
 
+    private fun isValidCardNumber(digits: String): Boolean {
+        if (digits.any { !it.isDigit() }) return false
+        val first = digits.first()
+        if (first !in listOf('3', '4', '5', '6')) return false
+        if (digits.length < 13 || digits.length > 19) return false
+        var sum = 0
+        var alternate = false
+        for (i in digits.indices.reversed()) {
+            var n = digits[i] - '0'
+            if (alternate) {
+                n *= 2
+                if (n > 9) n -= 9
+            }
+            sum += n
+            alternate = !alternate
+        }
+        return sum % 10 == 0
+    }
+
     private fun parseExpiry(texts: List<String>): String? {
         val expiryPattern = Regex("""(0[1-9]|1[0-2])/(\d{2}|\d{4})""")
         val shortPattern = Regex("""(0[1-9]|1[0-2])\s*/\s*(\d{2}|\d{4})""")
 
+        data class ExpiryDate(val mm: Int, val yy: Int)
+        val found = mutableListOf<ExpiryDate>()
+
         for (text in texts) {
-            expiryPattern.find(text)?.let {
-                val mm = it.groupValues[1]
-                val yy = it.groupValues[2].take(2)
-                return "$mm/$yy"
+            expiryPattern.findAll(text).forEach {
+                val mm = it.groupValues[1].toIntOrNull() ?: 0
+                val yy = it.groupValues[2].take(2).toIntOrNull() ?: 0
+                if (mm in 1..12) found.add(ExpiryDate(mm, if (yy < 100) yy + 2000 else yy))
             }
-            shortPattern.find(text)?.let {
-                val mm = it.groupValues[1]
-                val yy = it.groupValues[2].take(2)
-                return "$mm/$yy"
+            shortPattern.findAll(text).forEach {
+                val mm = it.groupValues[1].toIntOrNull() ?: 0
+                val yy = it.groupValues[2].take(2).toIntOrNull() ?: 0
+                if (mm in 1..12) found.add(ExpiryDate(mm, if (yy < 100) yy + 2000 else yy))
             }
+        }
+
+        if (found.isNotEmpty()) {
+            val latest = found.maxByOrNull { it.yy * 100 + it.mm }!!
+            val mmStr = latest.mm.toString().padStart(2, '0')
+            val yyStr = (latest.yy % 100).toString().padStart(2, '0')
+            return "$mmStr/$yyStr"
         }
 
         val digitPairs = texts.flatMap { text ->
