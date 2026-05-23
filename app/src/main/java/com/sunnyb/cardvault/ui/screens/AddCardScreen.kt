@@ -133,6 +133,7 @@ fun AddCardScreen(
                         title = "Front of Card",
                         imageUri = state.frontImageUri,
                         hasExistingImage = state.hasExistingFrontImage,
+                        ocrDetectedTexts = state.ocrDetectedTexts,
                         onImageSelected = { viewModel.setFrontImage(it) },
                         onSkip = { viewModel.nextStep() }
                     )
@@ -140,6 +141,7 @@ fun AddCardScreen(
                         title = "Back of Card",
                         imageUri = state.backImageUri,
                         hasExistingImage = state.hasExistingBackImage,
+                        ocrDetectedTexts = state.ocrDetectedTexts,
                         onImageSelected = { viewModel.setBackImage(it) },
                         onSkip = { viewModel.nextStep() }
                     )
@@ -293,6 +295,7 @@ private fun StepPhotoCapture(
     title: String,
     imageUri: Uri?,
     hasExistingImage: Boolean = false,
+    ocrDetectedTexts: List<String> = emptyList(),
     onImageSelected: (Uri) -> Unit,
     onSkip: () -> Unit
 ) {
@@ -441,6 +444,27 @@ private fun StepPhotoCapture(
         }
 
         Spacer(Modifier.height(12.dp))
+
+        if (imageUri != null && ocrDetectedTexts.isNotEmpty()) {
+            Text("App detected:", style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(4.dp))
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.05f),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    ocrDetectedTexts.forEach { text ->
+                        Text("• $text",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.padding(vertical = 1.dp))
+                    }
+                }
+            }
+            Spacer(Modifier.height(12.dp))
+        }
 
         Text(
             text = "— or import from gallery —",

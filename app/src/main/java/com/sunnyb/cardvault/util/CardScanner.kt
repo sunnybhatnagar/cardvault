@@ -1,6 +1,8 @@
 package com.sunnyb.cardvault.util
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Rect
 import android.net.Uri
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
@@ -10,13 +12,20 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.resume
 
+data class OcrTextBlock(
+    val text: String,
+    val left: Int, val top: Int, val right: Int, val bottom: Int
+)
+
 data class ScannedCardInfo(
     val cardNumber: String? = null,
     val expiry: String? = null,
     val issuer: String? = null,
     val cardholderName: String? = null,
     val variant: String? = null,
-    val product: String? = null
+    val product: String? = null,
+    val detectedTexts: List<String> = emptyList(),
+    val textBlocks: List<OcrTextBlock> = emptyList()
 )
 
 object CardScanner {
@@ -40,7 +49,14 @@ object CardScanner {
 
             if (result == null) return@withContext ScannedCardInfo()
 
-            val rawTexts = result.textBlocks.map { it.text }
+            val rawTextBlocks = result.textBlocks
+            val rawTexts = rawTextBlocks.map { it.text }
+            val detectedTexts = rawTextBlocks.map { it.text.trim() }.filter { it.isNotBlank() }
+            val textBlocks = rawTextBlocks.mapNotNull { block ->
+                val box = block.boundingBox
+                if (box != null) OcrTextBlock(block.text.trim(), box.left, box.top, box.right, box.bottom)
+                else null
+            }
 
             val texts = rawTexts.map { normalizeOcr(it) }
 
@@ -53,7 +69,9 @@ object CardScanner {
                 issuer = detectIssuerFromText(rawTexts),
                 cardholderName = parseCardholderName(rawTexts),
                 variant = if (number != null) detectVariant(number) else null,
-                product = parseProduct(rawTexts)
+                product = parseProduct(rawTexts),
+                detectedTexts = detectedTexts,
+                textBlocks = textBlocks
             )
         } catch (e: Exception) {
             ScannedCardInfo()
@@ -327,5 +345,39 @@ object CardScanner {
             }
         }
         return null
+    }
+
+    fun cropToCard(bitmap: Bitmap, textBlocks: List<OcrTextBlock>): Bitmap {
+        if (textBlocks.isEmpty()) {
+            val marginX = (bitmap.width * 0.08f).toInt()
+            val marginY = (bitmap.height * 0.15f).toInt()
+            val cx = bitmap.width / 2
+            val cy = bitmap.height / 2
+            val cropW = bitmap.width - marginX * 2
+            val cropH = bitmap.height - marginY * 2
+            if (cropW <= 0 || cropH <= 0) return bitmap
+            return Bitmap.createBitmap(bitmap,
+                maxOf(0, cx - cropW / 2), maxOf(0, cy - cropH / 2),
+                minOf(cropW, bitmap.width), minOf(cropH, bitmap.height))
+        }
+
+        var minLeft = Int.MAX_VALUE
+        var minTop = Int.MAX_VALUE
+        var maxRight = 0
+        var maxBottom = 0
+        for (block in textBlocks) {
+            if (block.left < minLeft) minLeft = block.left
+            if (block.top < minTop) minTop = block.top
+            if (block.right > maxRight) maxRight = block.right
+            if (block.bottom > maxBottom) maxBottom = block.bottom
+        }
+
+        val pad = 30
+        val x = maxOf(0, minLeft - pad)
+        val y = maxOf(0, minTop - pad)
+        val w = minOf(maxRight - minLeft + pad * 2, bitmap.width - x)
+        val h = minOf(maxBottom - minTop + pad * 2, bitmap.height - y)
+        if (w <= 0 || h <= 0) return bitmap
+        return Bitmap.createBitmap(bitmap, x, y, w, h)
     }
 }
