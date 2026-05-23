@@ -34,9 +34,7 @@ data class AddCardUiState(
     val cvvError: String? = null,
     val categoryId: Long? = null,
     val categories: List<Category> = emptyList(),
-    val isSaving: Boolean = false,
-    val ocrFailed: Boolean = false,
-    val ocrDetectedTexts: List<String> = emptyList()
+    val isSaving: Boolean = false
 )
 
 class AddCardViewModel : ViewModel() {
@@ -98,12 +96,10 @@ class AddCardViewModel : ViewModel() {
 
     fun setFrontImage(uri: Uri) {
         _state.update { it.copy(frontImageUri = uri) }
-        scanCardImage(uri)
     }
 
     fun setBackImage(uri: Uri) {
         _state.update { it.copy(backImageUri = uri) }
-        scanCardImage(uri)
     }
 
     fun updateNickname(value: String) {
@@ -170,37 +166,6 @@ class AddCardViewModel : ViewModel() {
 
     fun previousStep() {
         _state.update { it.copy(step = it.step - 1) }
-    }
-
-    private fun scanCardImage(uri: Uri) {
-        viewModelScope.launch {
-            val info = CardScanner.scan(appContext, uri)
-            val hasResult = info.cardNumber != null || info.expiry != null || info.variant != null
-            _state.update { it.copy(ocrFailed = !hasResult, ocrDetectedTexts = info.detectedTexts) }
-
-            info.cardNumber?.let { number ->
-                if (_state.value.cardNumber.isBlank()) {
-                    _state.update { it.copy(cardNumber = number) }
-                    updateCardNumber(number)
-                    val existing = cardRepository.getCardByCardNumber(number)
-                    if (existing != null && existing.id != editCardId) {
-                        val msg = "Card already saved as \"${existing.nickname}\""
-                        _state.update { it.copy(cardNumberError = msg) }
-                        _error.value = msg
-                    }
-                }
-            }
-            info.expiry?.let { expiry ->
-                if (_state.value.expiry.isBlank()) {
-                    _state.update { it.copy(expiry = expiry) }
-                }
-            }
-            info.variant?.let { variant ->
-                if (_state.value.variant.isBlank()) {
-                    _state.update { it.copy(variant = variant) }
-                }
-            }
-        }
     }
 
     fun saveCard() {

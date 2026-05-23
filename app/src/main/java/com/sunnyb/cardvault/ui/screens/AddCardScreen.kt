@@ -133,10 +133,6 @@ fun AddCardScreen(
                         title = "Front of Card",
                         imageUri = state.frontImageUri,
                         hasExistingImage = state.hasExistingFrontImage,
-                        ocrDetectedTexts = state.ocrDetectedTexts,
-                        detectedCardNumber = state.cardNumber,
-                        detectedExpiry = state.expiry,
-                        detectedVariant = state.variant,
                         onImageSelected = { viewModel.setFrontImage(it) },
                         onSkip = { viewModel.nextStep() }
                     )
@@ -144,10 +140,6 @@ fun AddCardScreen(
                         title = "Back of Card",
                         imageUri = state.backImageUri,
                         hasExistingImage = state.hasExistingBackImage,
-                        ocrDetectedTexts = state.ocrDetectedTexts,
-                        detectedCardNumber = state.cardNumber,
-                        detectedExpiry = state.expiry,
-                        detectedVariant = state.variant,
                         onImageSelected = { viewModel.setBackImage(it) },
                         onSkip = { viewModel.nextStep() }
                     )
@@ -176,21 +168,7 @@ fun AddCardScreen(
                     )
                 }
 
-            if (state.ocrFailed && state.step == 2 && state.backImageUri != null) {
-                Spacer(Modifier.height(8.dp))
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.error.copy(alpha = 0.1f),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = "Could not read card details from image. Try better lighting or enter details manually.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(12.dp)
-                    )
-                }
-            }
+            Spacer(Modifier.height(12.dp))
 
             val duplicateError = state.cardNumberError
             if (duplicateError != null && duplicateError.startsWith("Card already saved")) {
@@ -301,10 +279,6 @@ private fun StepPhotoCapture(
     title: String,
     imageUri: Uri?,
     hasExistingImage: Boolean = false,
-    ocrDetectedTexts: List<String> = emptyList(),
-    detectedCardNumber: String = "",
-    detectedExpiry: String = "",
-    detectedVariant: String = "",
     onImageSelected: (Uri) -> Unit,
     onSkip: () -> Unit
 ) {
@@ -454,53 +428,7 @@ private fun StepPhotoCapture(
 
         Spacer(Modifier.height(12.dp))
 
-        if (imageUri != null && ocrDetectedTexts.isNotEmpty()) {
-            Surface(
-                shape = RoundedCornerShape(8.dp),
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    if (detectedCardNumber.isNotBlank()) {
-                        Text("Card Number", style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary)
-                        Text(detectedCardNumber.chunked(4).joinToString(" "),
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface)
-                        Spacer(Modifier.height(4.dp))
-                    }
-                    if (detectedExpiry.isNotBlank()) {
-                        Text("Expiry", style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary)
-                        Text(detectedExpiry,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface)
-                        Spacer(Modifier.height(4.dp))
-                    }
-                    if (detectedVariant.isNotBlank()) {
-                        Text("Variant", style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary)
-                        Text(detectedVariant,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface)
-                        Spacer(Modifier.height(8.dp))
-                    }
-                    HorizontalDivider(color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f))
-                    Spacer(Modifier.height(6.dp))
-                    Text("Raw OCR text:", style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Spacer(Modifier.height(4.dp))
-                    ocrDetectedTexts.forEach { text ->
-                        Text("• $text",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.padding(vertical = 1.dp))
-                    }
-                }
-            }
-            Spacer(Modifier.height(12.dp))
-        }
+        Spacer(Modifier.height(12.dp))
 
         Text(
             text = "— or import from gallery —",
