@@ -84,6 +84,13 @@ object CardScanner {
             .replace('I', '1')
             .replace('O', '0')
             .replace('o', '0')
+            .replace('S', '5')
+            .replace('s', '5')
+            .replace('A', '4')
+            .replace('B', '8')
+            .replace('b', '8')
+            .replace('G', '6')
+            .replace('g', '6')
     }
 
     private fun parseCardNumber(texts: List<String>): String? {
