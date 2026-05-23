@@ -32,6 +32,9 @@ class CardDetailViewModel(
     private val _backImageBitmap = MutableStateFlow<Bitmap?>(null)
     val backImageBitmap: StateFlow<Bitmap?> = _backImageBitmap.asStateFlow()
 
+    private val _frontImageBitmap = MutableStateFlow<Bitmap?>(null)
+    val frontImageBitmap: StateFlow<Bitmap?> = _frontImageBitmap.asStateFlow()
+
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
@@ -56,6 +59,24 @@ class CardDetailViewModel(
             } catch (e: Exception) {
                 _error.value = "Failed to load card details"
             }
+        }
+    }
+
+    fun loadFrontImage() {
+        viewModelScope.launch {
+            val path = _card.value?.frontImagePath ?: return@launch
+            val cached = imageCache.get(path)
+            if (cached != null) {
+                _frontImageBitmap.value = cached
+                return@launch
+            }
+            val bitmap = withContext(Dispatchers.IO) {
+                encryptionManager.readEncryptedBitmap(path)
+            }
+            if (bitmap != null) {
+                imageCache.put(path, bitmap)
+            }
+            _frontImageBitmap.value = bitmap
         }
     }
 

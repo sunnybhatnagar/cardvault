@@ -41,6 +41,7 @@ fun CardDetailScreen(
 ) {
     val card by viewModel.card.collectAsState()
     val categoryName by viewModel.categoryName.collectAsState()
+    val frontImageBitmap by viewModel.frontImageBitmap.collectAsState()
     val backImageBitmap by viewModel.backImageBitmap.collectAsState()
     val error by viewModel.error.collectAsState()
     val isDeleted by viewModel.isDeleted.collectAsState()
@@ -63,6 +64,10 @@ fun CardDetailScreen(
             viewModel.onDeleteComplete()
             onBack()
         }
+    }
+
+    LaunchedEffect(card) {
+        if (card?.frontImagePath != null) viewModel.loadFrontImage()
     }
 
     val flipRotation by animateFloatAsState(
@@ -149,10 +154,30 @@ fun CardDetailScreen(
                 contentAlignment = Alignment.Center
             ) {
                 if (flipRotation <= 90f) {
-                    CardFrontView(
-                        card = card!!,
-                        modifier = Modifier.graphicsLayer { rotationY = flipRotation }
-                    )
+                    if (frontImageBitmap != null) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(RoundedCornerShape(16.dp))
+                                .graphicsLayer { rotationY = flipRotation }
+                        ) {
+                            androidx.compose.foundation.Image(
+                                bitmap = frontImageBitmap!!.asImageBitmap(),
+                                contentDescription = "Front of card",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Fit
+                            )
+                        }
+                    } else if (card!!.frontImagePath != null) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text("Loading...", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    } else {
+                        CardFrontView(
+                            card = card!!,
+                            modifier = Modifier.graphicsLayer { rotationY = flipRotation }
+                        )
+                    }
                 } else {
                     Box(
                         modifier = Modifier
