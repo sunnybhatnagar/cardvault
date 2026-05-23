@@ -117,19 +117,7 @@ object CardScanner {
         if (digits.any { !it.isDigit() }) return false
         val first = digits.first()
         if (first !in listOf('3', '4', '5', '6')) return false
-        if (digits.length < 13 || digits.length > 19) return false
-        var sum = 0
-        var alternate = false
-        for (i in digits.indices.reversed()) {
-            var n = digits[i] - '0'
-            if (alternate) {
-                n *= 2
-                if (n > 9) n -= 9
-            }
-            sum += n
-            alternate = !alternate
-        }
-        return sum % 10 == 0
+        return digits.length in 13..19
     }
 
     private fun parseExpiry(texts: List<String>): String? {
@@ -271,7 +259,8 @@ object CardScanner {
             "BANK", "VISA", "MASTERCARD", "AMERICAN", "EXPRESS", "RUPAY",
             "DINERS", "CLUB", "JCB", "PLATINUM", "GOLD", "SIGNATURE",
             "INFINITE", "ELITE", "WWW", "COM",
-            "MONTH", "YEAR", "DATE", "FROM", "MOBILO", "MOBILE"
+            "MONTH", "YEAR", "DATE", "FROM", "MOBILO", "MOBILE",
+            "APP", "SMS", "PAY", "WALLET", "ONLINE"
         ) + bankWords + setOf(
             "DEBIT", "CREDIT", "CLASSIC", "STANDARD", "PREMIER",
             "CORPORATE", "BUSINESS", "EXECUTIVE", "REWARDS", "MILEAGE",
@@ -314,7 +303,7 @@ object CardScanner {
             "CHASE", "WELLS", "FARGO", "BARCLAYS", "CAPITAL", "ONE",
             "DISCOVER"
         )
-        val skipWords = setOf("BANK", "OF", "THE", "AND", "FOR", "IN", "AT", "TO", "CARD")
+        val skipWords = setOf("BANK", "OF", "THE", "AND", "FOR", "IN", "AT", "TO", "CARD", "MOBILE", "APP")
 
         val words = combined.split(Regex("\\s+"))
         for (i in words.indices) {
