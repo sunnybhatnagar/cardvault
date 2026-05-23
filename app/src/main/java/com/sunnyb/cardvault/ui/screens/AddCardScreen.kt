@@ -226,16 +226,20 @@ fun AddCardScreen(
                 }
 
                 if (state.step < 3) {
+                    val isDuplicate = state.cardNumberError != null && state.cardNumberError!!.startsWith("Card already saved")
                     Button(
                         onClick = { viewModel.nextStep() },
                         modifier = Modifier.weight(1f),
+                        enabled = !isDuplicate,
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                            contentColor = MaterialTheme.colorScheme.primary
+                            contentColor = MaterialTheme.colorScheme.primary,
+                            disabledContainerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.1f),
+                            disabledContentColor = MaterialTheme.colorScheme.error
                         ),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Text("Next →")
+                        Text(if (isDuplicate) "Duplicate Card" else "Next →")
                     }
                 } else {
                     Button(
