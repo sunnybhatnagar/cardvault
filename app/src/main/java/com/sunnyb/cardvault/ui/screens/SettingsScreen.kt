@@ -447,7 +447,7 @@ fun SettingsScreen(
                 Column {
                     Text("About Card Vault", style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface)
-                    Text("Version 1.4 · Developer · Legal",
+                    Text("Version 1.4.1 · Developer · Legal",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
@@ -512,7 +512,7 @@ fun SettingsScreen(
                 title = { Text("What's New") },
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text("v1.4 — May 2026", fontWeight = FontWeight.Bold,
+                        Text("v1.4.1 — May 2026", fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary)
                         Text("•  Manual entry — type card details yourself, no OCR",
                             style = MaterialTheme.typography.bodySmall,
