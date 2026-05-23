@@ -10,7 +10,6 @@ import androidx.lifecycle.viewModelScope
 import com.sunnyb.cardvault.CardVaultApp
 import com.sunnyb.cardvault.data.db.entity.Card
 import com.sunnyb.cardvault.data.db.entity.Category
-import com.sunnyb.cardvault.util.CardCropper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -236,18 +235,9 @@ class AddCardViewModel : ViewModel() {
                     val file = File(appContext.filesDir, fileName)
                     val encryptedFile = encryptionManager.createEncryptedFile(file)
 
-                    val bounds = CardCropper.detectCardBounds(appContext, uri)
                     val inputStream = appContext.contentResolver.openInputStream(uri)
-                    var bitmap = decodeAndResizeBitmap(inputStream, maxWidth = 1080)
+                    val bitmap = decodeAndResizeBitmap(inputStream, maxWidth = 1080)
                     inputStream?.close()
-
-                    if (bitmap != null && bounds != null) {
-                        val cropped = CardCropper.cropBitmap(bitmap, bounds)
-                        if (cropped != bitmap) {
-                            bitmap.recycle()
-                            bitmap = cropped
-                        }
-                    }
 
                     if (bitmap != null) {
                         val baos = ByteArrayOutputStream()
