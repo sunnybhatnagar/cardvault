@@ -316,17 +316,6 @@ class AddCardViewModel : ViewModel() {
             }
         }
 
-        val cropMarginX = (bitmap.width * 0.18f).toInt()
-        val cropMarginY = (bitmap.height * 0.18f).toInt()
-        if (cropMarginX > 0 && cropMarginY > 0 && cropMarginX * 2 < bitmap.width && cropMarginY * 2 < bitmap.height) {
-            val cropped = Bitmap.createBitmap(bitmap, cropMarginX, cropMarginY,
-                bitmap.width - cropMarginX * 2, bitmap.height - cropMarginY * 2)
-            if (cropped != bitmap) {
-                bitmap.recycle()
-                bitmap = cropped
-            }
-        }
-
         if (bitmap.width > maxWidth) {
             val ratio = maxWidth.toFloat() / bitmap.width
             val newHeight = (bitmap.height * ratio).toInt()

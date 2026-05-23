@@ -5,9 +5,8 @@ import android.graphics.Bitmap
 import android.graphics.Rect
 import android.net.Uri
 import com.google.mlkit.vision.common.InputImage
-import com.google.mlkit.vision.objects.DetectedObject
-import com.google.mlkit.vision.objects.ObjectDetection
-import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions
+import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
@@ -15,30 +14,38 @@ import kotlin.coroutines.resume
 
 object CardCropper {
 
-    private val detector by lazy {
-        ObjectDetection.getClient(
-            ObjectDetectorOptions.Builder()
-                .setDetectorMode(ObjectDetectorOptions.SINGLE_IMAGE_MODE)
-                .build()
-        )
+    private val recognizer by lazy {
+        TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
     }
 
     suspend fun detectCardBounds(context: Context, imageUri: Uri): Rect? = withContext(Dispatchers.IO) {
         try {
             val inputImage = InputImage.fromFilePath(context, imageUri)
-            val objects = suspendCancellableCoroutine<List<DetectedObject>?> { cont ->
-                detector.process(inputImage)
+            val result = suspendCancellableCoroutine { cont ->
+                recognizer.process(inputImage)
                     .addOnSuccessListener { cont.resume(it) }
                     .addOnFailureListener { cont.resume(null) }
             }
-            if (objects.isNullOrEmpty()) return@withContext null
-            objects.maxByOrNull { it.boundingBox.width().toLong() * it.boundingBox.height() }?.boundingBox
+            if (result == null) return@withContext null
+
+            val blocks = result.textBlocks.filter { it.boundingBox != null }
+            if (blocks.isEmpty()) return@withContext null
+
+            val union = blocks.mapNotNull { it.boundingBox }.reduce { acc, rect ->
+                Rect(
+                    minOf(acc.left, rect.left),
+                    minOf(acc.top, rect.top),
+                    maxOf(acc.right, rect.right),
+                    maxOf(acc.bottom, rect.bottom)
+                )
+            }
+            union
         } catch (e: Exception) {
             null
         }
     }
 
-    fun cropBitmap(bitmap: Bitmap, bounds: Rect, paddingFraction: Float = 0.05f): Bitmap {
+    fun cropBitmap(bitmap: Bitmap, bounds: Rect, paddingFraction: Float = 0.08f): Bitmap {
         val padX = (bounds.width() * paddingFraction).toInt()
         val padY = (bounds.height() * paddingFraction).toInt()
         val x = maxOf(0, bounds.left - padX)
