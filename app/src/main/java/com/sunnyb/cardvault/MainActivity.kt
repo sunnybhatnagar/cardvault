@@ -80,7 +80,7 @@ class MainActivity : FragmentActivity() {
                 mutableStateOf(!onboardingPrefs.getBoolean("done", false))
             }
 
-            CardVaultTheme(themeMode = (application as CardVaultApp).themeMode) {
+            CardVaultTheme(themeMode = (application as? CardVaultApp)?.themeMode ?: ThemeMode.DARK) {
                 if (showOnboarding) {
                     OnboardingScreen(
                         onComplete = {

@@ -82,13 +82,13 @@ class SettingsViewModel @Inject constructor(
         val prefs = context.getSharedPreferences("cardvault_theme", Context.MODE_PRIVATE)
         val mode = ThemeMode.valueOf(prefs.getString("theme_mode", "DARK") ?: "DARK")
         _themeMode.value = mode
-        (application as CardVaultApp).themeMode = mode
+        (application as? CardVaultApp)?.themeMode = mode
     }
 
     fun toggleTheme(context: Context) {
         val newMode = if (_themeMode.value == ThemeMode.DARK) ThemeMode.LIGHT else ThemeMode.DARK
         _themeMode.value = newMode
-        (application as CardVaultApp).themeMode = newMode
+        (application as? CardVaultApp)?.themeMode = newMode
         context.getSharedPreferences("cardvault_theme", Context.MODE_PRIVATE)
             .edit().putString("theme_mode", newMode.name).apply()
     }

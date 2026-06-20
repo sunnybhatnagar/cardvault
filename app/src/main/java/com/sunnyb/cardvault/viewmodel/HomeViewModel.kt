@@ -20,7 +20,7 @@ class HomeViewModel @Inject constructor(
     private val application: Application
 ) : ViewModel() {
 
-    val isDeviceRooted: Boolean = (application as CardVaultApp).isDeviceRooted
+    val isDeviceRooted: Boolean = (application as? CardVaultApp)?.isDeviceRooted ?: false
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
