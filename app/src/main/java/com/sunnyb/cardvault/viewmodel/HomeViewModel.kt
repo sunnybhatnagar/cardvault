@@ -1,18 +1,26 @@
 package com.sunnyb.cardvault.viewmodel
 
+import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sunnyb.cardvault.CardVaultApp
+import com.sunnyb.cardvault.data.db.CardDao
 import com.sunnyb.cardvault.data.db.entity.Card
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 enum class ViewMode { GRID, LIST }
 
-class HomeViewModel : ViewModel() {
+@HiltViewModel
+class HomeViewModel @Inject constructor(
+    private val cardDao: CardDao,
+    private val application: Application
+) : ViewModel() {
 
-    private val cardDao = CardVaultApp.instance.database.cardDao()
+    val isDeviceRooted: Boolean = (application as CardVaultApp).isDeviceRooted
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()

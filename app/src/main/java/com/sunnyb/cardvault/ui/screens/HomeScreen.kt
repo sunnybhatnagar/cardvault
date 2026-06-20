@@ -21,7 +21,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.sunnyb.cardvault.ui.components.CardListItem
 import com.sunnyb.cardvault.ui.components.CardTile
 import com.sunnyb.cardvault.ui.components.ShimmerCardListItem
@@ -37,7 +37,7 @@ import androidx.compose.ui.platform.LocalContext
 fun HomeScreen(
     onCardClick: (Long) -> Unit,
     onAddCard: () -> Unit,
-    viewModel: HomeViewModel = viewModel()
+    viewModel: HomeViewModel = hiltViewModel()
 ) {
     val cards by viewModel.cards.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
@@ -58,6 +58,20 @@ fun HomeScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
+        if (viewModel.isDeviceRooted) {
+            Surface(
+                color = MaterialTheme.colorScheme.errorContainer,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "⚠️ Device is rooted. Security is reduced.",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier.padding(vertical = 4.dp, horizontal = 16.dp)
+                )
+            }
+        }
+
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { viewModel.onSearchQueryChange(it) },

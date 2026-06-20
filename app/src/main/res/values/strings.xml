@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Card Vault</string>
+    <string name="default_web_client_id" translatable="false">1038116947037-4fesvle4gl76pf0glslo46ik09dbb578.apps.googleusercontent.com</string>
 </resources>

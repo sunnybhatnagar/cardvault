@@ -2,6 +2,7 @@ package com.sunnyb.cardvault.ui.screens
 
 import android.app.Activity
 import android.content.Context
+import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -27,16 +28,22 @@ import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.Icon
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.sunnyb.cardvault.ui.theme.*
-import com.sunnyb.cardvault.util.DriveBackupService
 import com.sunnyb.cardvault.viewmodel.SettingsViewModel
+
+private sealed class PasswordAction {
+    data object Export : PasswordAction()
+    data object Import : PasswordAction()
+    data object DriveBackup : PasswordAction()
+    data class DriveRestore(val fileId: String) : PasswordAction()
+}
 
 @Composable
 fun SettingsScreen(
     onHelpClick: () -> Unit = {},
     onAboutClick: () -> Unit = {},
-    viewModel: SettingsViewModel = viewModel()
+    viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val exportState by viewModel.exportState.collectAsState()
@@ -44,33 +51,37 @@ fun SettingsScreen(
     val currentTimeoutMs by viewModel.currentTimeoutMs.collectAsState()
     var timeoutExpanded by remember { mutableStateOf(false) }
 
+    var showPasswordDialog by remember { mutableStateOf(false) }
+    var passwordAction by remember { mutableStateOf<PasswordAction?>(null) }
+    var pendingUri by remember { mutableStateOf<Uri?>(null) }
+
     val currentLabel = SettingsViewModel.TIMEOUT_OPTIONS
         .find { it.ms == currentTimeoutMs }?.label ?: "30 seconds"
 
     val exportLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/octet-stream")
     ) { uri ->
-        uri?.let { viewModel.exportBackupToUri(context, it) }
+        uri?.let {
+            pendingUri = it
+            passwordAction = PasswordAction.Export
+            showPasswordDialog = true
+        }
     }
 
     val filePickerLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument()
     ) { uri ->
-        uri?.let { viewModel.parseBackupFile(context, it) }
-    }
-
-    val signInLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            viewModel.onDriveSignedIn()
-        } else {
-            viewModel.resetDriveState()
+        uri?.let {
+            pendingUri = it
+            passwordAction = PasswordAction.Import
+            showPasswordDialog = true
         }
     }
 
     val driveState by viewModel.driveState.collectAsState()
     val driveBackups by viewModel.driveBackups.collectAsState()
+    val accountEmail by viewModel.accountEmail.collectAsState()
+    val isSignedIn = accountEmail != null
     val themeMode by viewModel.themeMode.collectAsState()
     var showChangelog by remember { mutableStateOf(false) }
     var showPrivacy by remember { mutableStateOf(false) }
@@ -133,6 +144,26 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { viewModel.cancelRestore() }) { Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            }
+        )
+    }
+
+    if (showPasswordDialog) {
+        PasswordDialog(
+            onDismiss = {
+                showPasswordDialog = false
+                passwordAction = null
+            },
+            onConfirm = { password ->
+                when (val action = passwordAction) {
+                    PasswordAction.Export -> pendingUri?.let { viewModel.exportBackupToUri(context, it, password) }
+                    PasswordAction.Import -> pendingUri?.let { viewModel.parseBackupFile(context, it, password) }
+                    PasswordAction.DriveBackup -> viewModel.backupToDrive(context, password)
+                    is PasswordAction.DriveRestore -> viewModel.restoreFromDrive(context, action.fileId, password)
+                    null -> {}
+                }
+                showPasswordDialog = false
+                passwordAction = null
             }
         )
     }
@@ -301,10 +332,11 @@ fun SettingsScreen(
         Spacer(Modifier.height(12.dp))
 
         SettingsCard(onClick = {
-            if (DriveBackupService.isSignedIn(context)) {
-                viewModel.backupToDrive(context)
+            if (isSignedIn) {
+                passwordAction = PasswordAction.DriveBackup
+                showPasswordDialog = true
             } else {
-                signInLauncher.launch(DriveBackupService.getSignInIntent(context))
+                viewModel.signInToDrive(context)
             }
         }) {
             Row(
@@ -327,8 +359,8 @@ fun SettingsScreen(
                     CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.primary)
                 } else {
                     Icon(
-                        if (DriveBackupService.isSignedIn(context)) Icons.Default.Cloud else Icons.Default.Link,
-                        contentDescription = if (DriveBackupService.isSignedIn(context)) "Drive" else "Sign in",
+                        if (isSignedIn) Icons.Default.Cloud else Icons.Default.Link,
+                        contentDescription = if (isSignedIn) "Drive" else "Sign in",
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -338,10 +370,10 @@ fun SettingsScreen(
         Spacer(Modifier.height(12.dp))
 
         SettingsCard(onClick = {
-            if (DriveBackupService.isSignedIn(context)) {
+            if (isSignedIn) {
                 viewModel.listDriveBackups(context)
             } else {
-                signInLauncher.launch(DriveBackupService.getSignInIntent(context))
+                viewModel.signInToDrive(context)
             }
         }) {
             Row(
@@ -364,8 +396,8 @@ fun SettingsScreen(
                     CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.primary)
                 } else {
                     Icon(
-                        if (DriveBackupService.isSignedIn(context)) Icons.Default.Cloud else Icons.Default.Link,
-                        contentDescription = if (DriveBackupService.isSignedIn(context)) "Drive" else "Sign in",
+                        if (isSignedIn) Icons.Default.Cloud else Icons.Default.Link,
+                        contentDescription = if (isSignedIn) "Drive" else "Sign in",
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -383,7 +415,8 @@ fun SettingsScreen(
                     Column {
                         driveBackups.forEach { file ->
                             TextButton(onClick = {
-                                viewModel.restoreFromDrive(context, file.id)
+                                passwordAction = PasswordAction.DriveRestore(file.id)
+                                showPasswordDialog = true
                             }) {
                                 Text(file.name ?: "Backup", color = MaterialTheme.colorScheme.primary)
                             }
@@ -657,6 +690,47 @@ fun SettingsScreen(
         }
 
     }
+}
+
+@Composable
+private fun PasswordDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit
+) {
+    var password by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Backup Password") },
+        text = {
+            Column {
+                Text("Required for encryption/decryption. If you lose this password, you cannot restore your backup.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.height(16.dp))
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text("Password") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Password),
+                    shape = RoundedCornerShape(12.dp)
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onConfirm(password) },
+                enabled = password.isNotBlank(),
+                shape = RoundedCornerShape(12.dp)
+            ) { Text("OK") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        }
+    )
 }
 
 @Composable

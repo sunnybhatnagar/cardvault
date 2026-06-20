@@ -1,5 +1,6 @@
 package com.sunnyb.cardvault.viewmodel
 
+import android.app.Application
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
@@ -7,15 +8,19 @@ import android.net.Uri
 import androidx.exifinterface.media.ExifInterface
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.sunnyb.cardvault.CardVaultApp
+import com.sunnyb.cardvault.data.db.CardDao
+import com.sunnyb.cardvault.data.db.CategoryDao
 import com.sunnyb.cardvault.data.db.entity.Card
 import com.sunnyb.cardvault.data.db.entity.Category
+import com.sunnyb.cardvault.security.EncryptionManager
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.io.File
+import javax.inject.Inject
 
 data class AddCardUiState(
     val step: Int = 1,
@@ -38,12 +43,13 @@ data class AddCardUiState(
     val isSaving: Boolean = false
 )
 
-class AddCardViewModel : ViewModel() {
-
-    private val cardDao = CardVaultApp.instance.database.cardDao()
-    private val categoryDao = CardVaultApp.instance.database.categoryDao()
-    private val encryptionManager = CardVaultApp.instance.encryptionManager
-    private val appContext = CardVaultApp.instance
+@HiltViewModel
+class AddCardViewModel @Inject constructor(
+    private val cardDao: CardDao,
+    private val categoryDao: CategoryDao,
+    private val encryptionManager: EncryptionManager,
+    private val application: Application
+) : ViewModel() {
 
     private val _state = MutableStateFlow(AddCardUiState())
     val state: StateFlow<AddCardUiState> = _state.asStateFlow()
@@ -232,10 +238,10 @@ class AddCardViewModel : ViewModel() {
                 if (uri == null) continue
                 try {
                     val fileName = "card_${cardId}_$suffix.jpg"
-                    val file = File(appContext.filesDir, fileName)
+                    val file = File(application.filesDir, fileName)
                     val encryptedFile = encryptionManager.createEncryptedFile(file)
 
-                    val inputStream = appContext.contentResolver.openInputStream(uri)
+                    val inputStream = application.contentResolver.openInputStream(uri)
                     val bitmap = decodeAndResizeBitmap(inputStream, maxWidth = 1080)
                     inputStream?.close()
 
@@ -278,7 +284,7 @@ class AddCardViewModel : ViewModel() {
 
         var rotation = 0f
         try {
-            val tmpFile = File(appContext.cacheDir, "exif_${System.nanoTime()}.jpg")
+            val tmpFile = File(application.cacheDir, "exif_${System.nanoTime()}.jpg")
             tmpFile.writeBytes(bytes)
             val exif = ExifInterface(tmpFile.absolutePath)
             when (exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)) {
@@ -319,7 +325,7 @@ class AddCardViewModel : ViewModel() {
     }
 
     private fun cleanupTempImages() {
-        val cacheDir = appContext.cacheDir
+        val cacheDir = application.cacheDir
         cacheDir.listFiles()
             ?.filter { it.name.startsWith("card_") }
             ?.forEach { it.delete() }

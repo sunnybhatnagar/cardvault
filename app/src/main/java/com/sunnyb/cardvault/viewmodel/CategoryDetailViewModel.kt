@@ -1,17 +1,25 @@
 package com.sunnyb.cardvault.viewmodel
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.sunnyb.cardvault.CardVaultApp
+import com.sunnyb.cardvault.data.db.CardDao
+import com.sunnyb.cardvault.data.db.CategoryDao
 import com.sunnyb.cardvault.data.db.entity.Card
 import com.sunnyb.cardvault.data.db.entity.Category
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class CategoryDetailViewModel : ViewModel() {
+@HiltViewModel
+class CategoryDetailViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle,
+    private val cardDao: CardDao,
+    private val categoryDao: CategoryDao
+) : ViewModel() {
 
-    private val cardDao = CardVaultApp.instance.database.cardDao()
-    private val categoryDao = CardVaultApp.instance.database.categoryDao()
+    private val categoryId: Long = savedStateHandle["categoryId"] ?: -1
 
     private val _category = MutableStateFlow<Category?>(null)
     val category: StateFlow<Category?> = _category.asStateFlow()
@@ -24,6 +32,12 @@ class CategoryDetailViewModel : ViewModel() {
 
     private val _isDeleted = MutableStateFlow(false)
     val isDeleted: StateFlow<Boolean> = _isDeleted.asStateFlow()
+
+    init {
+        if (categoryId != -1L) {
+            loadCategory(categoryId)
+        }
+    }
 
     fun loadCategory(categoryId: Long) {
         viewModelScope.launch {

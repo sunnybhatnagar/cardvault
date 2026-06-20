@@ -20,7 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
 import com.sunnyb.cardvault.data.db.entity.Card
@@ -33,7 +33,7 @@ fun CategoryDetailScreen(
     categoryId: Long,
     onBack: () -> Unit,
     onCardClick: (Long) -> Unit,
-    viewModel: CategoryDetailViewModel = viewModel()
+    viewModel: CategoryDetailViewModel = hiltViewModel()
 ) {
     val category by viewModel.category.collectAsState()
     val cards by viewModel.cards.collectAsState()

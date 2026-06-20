@@ -2,11 +2,12 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt)
 }
 
 android {
     namespace = "com.sunnyb.cardvault"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.sunnyb.cardvault"
@@ -17,13 +18,13 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        ksp {
-            arg("room.schemaLocation", "$projectDir/schemas")
-        }
-
         vectorDrawables {
             useSupportLibrary = true
         }
+    }
+
+    ksp {
+        arg("room.schemaLocation", "$projectDir/schemas")
     }
 
     splits {
@@ -87,7 +88,7 @@ android {
 
 dependencies {
     implementation(libs.androidx.core.ktx)
-    implementation("androidx.core:core-splashscreen:1.0.1")
+    implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.activity.compose)
@@ -103,9 +104,15 @@ dependencies {
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.security.crypto)
     implementation(libs.androidx.biometric)
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.googleid)
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
     implementation("androidx.exifinterface:exifinterface:1.3.7")
     implementation("io.coil-kt:coil-compose:2.6.0")
-    implementation("com.google.android.gms:play-services-auth:21.1.0")
     implementation("com.google.api-client:google-api-client-android:2.2.0")
     implementation("com.google.apis:google-api-services-drive:v3-rev20230815-2.0.0")
     implementation("com.google.http-client:google-http-client-gson:1.43.3")

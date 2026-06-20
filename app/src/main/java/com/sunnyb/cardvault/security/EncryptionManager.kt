@@ -9,12 +9,15 @@ import androidx.security.crypto.EncryptedFile
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import java.io.File
-import java.security.Key
 import java.security.KeyStore
+import java.security.SecureRandom
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
+import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.GCMParameterSpec
+import javax.crypto.spec.PBEKeySpec
+import javax.crypto.spec.SecretKeySpec
 
 class EncryptionManager(private val context: Context) {
 
@@ -85,6 +88,33 @@ class EncryptionManager(private val context: Context) {
         val data = ciphertext.copyOfRange(12, ciphertext.size)
         cipher.init(Cipher.DECRYPT_MODE, secretKey, GCMParameterSpec(128, iv))
         return cipher.doFinal(data)
+    }
+
+    fun encryptWithPassword(plaintext: ByteArray, password: String): ByteArray {
+        val salt = ByteArray(16).apply { SecureRandom().nextBytes(this) }
+        val secretKey = deriveKey(password, salt)
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(Cipher.ENCRYPT_MODE, secretKey)
+        val iv = cipher.iv
+        val encrypted = cipher.doFinal(plaintext)
+        return salt + iv + encrypted
+    }
+
+    fun decryptWithPassword(combined: ByteArray, password: String): ByteArray {
+        val salt = combined.copyOfRange(0, 16)
+        val iv = combined.copyOfRange(16, 28)
+        val ciphertext = combined.copyOfRange(28, combined.size)
+        val secretKey = deriveKey(password, salt)
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(Cipher.DECRYPT_MODE, secretKey, GCMParameterSpec(128, iv))
+        return cipher.doFinal(ciphertext)
+    }
+
+    private fun deriveKey(password: String, salt: ByteArray): SecretKey {
+        val factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
+        val spec = PBEKeySpec(password.toCharArray(), salt, 65536, 256)
+        val tmp = factory.generateSecret(spec)
+        return SecretKeySpec(tmp.encoded, "AES")
     }
 
     fun readEncryptedBitmap(filePath: String): Bitmap? {

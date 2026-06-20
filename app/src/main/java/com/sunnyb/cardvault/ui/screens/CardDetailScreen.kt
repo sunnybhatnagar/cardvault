@@ -29,22 +29,22 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import com.sunnyb.cardvault.ui.components.CardFrontView
 import com.sunnyb.cardvault.viewmodel.CardDetailViewModel
 import com.sunnyb.cardvault.ui.theme.*
+import com.sunnyb.cardvault.util.coil.EncryptedImageModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CardDetailScreen(
     onBack: () -> Unit,
     onEdit: (Long) -> Unit,
-    viewModel: CardDetailViewModel = viewModel()
+    viewModel: CardDetailViewModel = hiltViewModel()
 ) {
     val card by viewModel.card.collectAsState()
     val categoryName by viewModel.categoryName.collectAsState()
-    val frontImageBitmap by viewModel.frontImageBitmap.collectAsState()
-    val backImageBitmap by viewModel.backImageBitmap.collectAsState()
     val error by viewModel.error.collectAsState()
     val isDeleted by viewModel.isDeleted.collectAsState()
     var showCardNumber by remember { mutableStateOf(false) }
@@ -69,10 +69,6 @@ fun CardDetailScreen(
             viewModel.onDeleteComplete()
             onBack()
         }
-    }
-
-    LaunchedEffect(card) {
-        if (card?.frontImagePath != null) viewModel.loadFrontImage()
     }
 
     val flipRotation by animateFloatAsState(
@@ -163,7 +159,6 @@ fun CardDetailScreen(
                     }
                     .clickable {
                         if (card!!.backImagePath != null) {
-                            if (!isFlipped) viewModel.loadBackImage()
                             isFlipped = !isFlipped
                             zoomScale = 1f
                             zoomOffsetX = 0f
@@ -173,24 +168,16 @@ fun CardDetailScreen(
                 contentAlignment = Alignment.Center
             ) {
                 if (flipRotation <= 90f) {
-                    if (frontImageBitmap != null) {
-                        Box(
+                    if (card!!.frontImagePath != null) {
+                        AsyncImage(
+                            model = EncryptedImageModel(card!!.frontImagePath!!),
+                            contentDescription = "Front of card",
                             modifier = Modifier
                                 .fillMaxSize()
                                 .clip(RoundedCornerShape(16.dp))
-                                .graphicsLayer { rotationY = flipRotation }
-                        ) {
-                            androidx.compose.foundation.Image(
-                                bitmap = frontImageBitmap!!.asImageBitmap(),
-                                contentDescription = "Front of card",
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Fit
-                            )
-                        }
-                    } else if (card!!.frontImagePath != null) {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text("Loading...", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
+                                .graphicsLayer { rotationY = flipRotation },
+                            contentScale = ContentScale.Fit
+                        )
                     } else {
                         CardFrontView(
                             card = card!!,
@@ -198,24 +185,27 @@ fun CardDetailScreen(
                         )
                     }
                 } else {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(MaterialTheme.colorScheme.surface)
-                            .graphicsLayer { rotationY = 180f - flipRotation },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (backImageBitmap != null) {
-                            androidx.compose.foundation.Image(
-                                bitmap = backImageBitmap!!.asImageBitmap(),
-                                contentDescription = "Back of card",
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Fit
-                            )
-                        } else {
+                    if (card!!.backImagePath != null) {
+                        AsyncImage(
+                            model = EncryptedImageModel(card!!.backImagePath!!),
+                            contentDescription = "Back of card",
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(RoundedCornerShape(16.dp))
+                                .graphicsLayer { rotationY = 180f - flipRotation },
+                            contentScale = ContentScale.Fit
+                        )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(MaterialTheme.colorScheme.surface)
+                                .graphicsLayer { rotationY = 180f - flipRotation },
+                            contentAlignment = Alignment.Center
+                        ) {
                             Text(
-                                text = if (card!!.backImagePath != null) "Loading..." else "No back image",
+                                text = "No back image",
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }

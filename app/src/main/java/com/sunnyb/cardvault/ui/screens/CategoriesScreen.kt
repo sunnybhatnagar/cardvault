@@ -17,7 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
 import com.sunnyb.cardvault.ui.theme.*
@@ -26,7 +26,7 @@ import com.sunnyb.cardvault.viewmodel.CategoriesViewModel
 @Composable
 fun CategoriesScreen(
     onCategoryClick: (Long) -> Unit = {},
-    viewModel: CategoriesViewModel = viewModel()
+    viewModel: CategoriesViewModel = hiltViewModel()
 ) {
     val categories by viewModel.categories.collectAsState()
     val error by viewModel.error.collectAsState()

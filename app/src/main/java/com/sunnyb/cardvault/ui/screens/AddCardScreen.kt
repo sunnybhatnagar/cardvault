@@ -32,7 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.sunnyb.cardvault.ui.theme.*
 import com.sunnyb.cardvault.util.CardNumberTransformation
@@ -46,7 +46,7 @@ fun AddCardScreen(
     editCardId: Long? = null,
     onBack: () -> Unit,
     onSaved: () -> Unit,
-    viewModel: AddCardViewModel = viewModel()
+    viewModel: AddCardViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
     val error by viewModel.error.collectAsState()

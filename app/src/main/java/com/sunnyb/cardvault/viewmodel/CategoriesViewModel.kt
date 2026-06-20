@@ -2,20 +2,24 @@ package com.sunnyb.cardvault.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.sunnyb.cardvault.CardVaultApp
+import com.sunnyb.cardvault.data.db.CardDao
+import com.sunnyb.cardvault.data.db.CategoryDao
 import com.sunnyb.cardvault.data.db.entity.Category
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 data class CategoryWithCount(
     val category: Category,
     val cardCount: Int
 )
 
-class CategoriesViewModel : ViewModel() {
-
-    private val cardDao = CardVaultApp.instance.database.cardDao()
-    private val categoryDao = CardVaultApp.instance.database.categoryDao()
+@HiltViewModel
+class CategoriesViewModel @Inject constructor(
+    private val cardDao: CardDao,
+    private val categoryDao: CategoryDao
+) : ViewModel() {
 
     private val _categories = MutableStateFlow<List<CategoryWithCount>>(emptyList())
     val categories: StateFlow<List<CategoryWithCount>> = _categories.asStateFlow()

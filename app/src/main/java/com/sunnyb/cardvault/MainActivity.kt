@@ -8,7 +8,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.compose.foundation.background
+import androidx.core.content.edit
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
@@ -28,11 +28,19 @@ import com.sunnyb.cardvault.ui.screens.OnboardingScreen
 import com.sunnyb.cardvault.ui.theme.CardVaultTheme
 import com.sunnyb.cardvault.ui.theme.DarkBackground
 import com.sunnyb.cardvault.ui.theme.ThemeMode
+import com.sunnyb.cardvault.data.db.CardDao
+import com.sunnyb.cardvault.security.SessionManager
 import com.sunnyb.cardvault.util.NotificationHelper
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.first
 import java.util.Calendar
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class MainActivity : FragmentActivity() {
+
+    @Inject lateinit var sessionManager: SessionManager
+    @Inject lateinit var cardDao: CardDao
 
     private lateinit var biometricAuth: BiometricAuth
     private var notificationPermRequested = false
@@ -54,12 +62,12 @@ class MainActivity : FragmentActivity() {
             when (event) {
                 Lifecycle.Event.ON_STOP -> {
                     if (::biometricAuth.isInitialized) {
-                        app.sessionManager.onBackground()
+                        sessionManager.onBackground()
                     }
                 }
                 Lifecycle.Event.ON_START -> {
                     if (::biometricAuth.isInitialized) {
-                        app.sessionManager.onForeground()
+                        sessionManager.onForeground()
                     }
                 }
                 else -> {}
@@ -72,18 +80,18 @@ class MainActivity : FragmentActivity() {
                 mutableStateOf(!onboardingPrefs.getBoolean("done", false))
             }
 
-            CardVaultTheme(themeMode = app.themeMode) {
+            CardVaultTheme(themeMode = (application as CardVaultApp).themeMode) {
                 if (showOnboarding) {
                     OnboardingScreen(
                         onComplete = {
-                            onboardingPrefs.edit().putBoolean("done", true).apply()
+                            onboardingPrefs.edit { putBoolean("done", true) }
                             showOnboarding = false
                         }
                     )
                     return@CardVaultTheme
                 }
 
-                val isLocked by app.sessionManager.isLocked.collectAsState()
+                val isLocked by sessionManager.isLocked.collectAsState()
 
                 if (isLocked) {
                     LockScreen(
@@ -91,8 +99,7 @@ class MainActivity : FragmentActivity() {
                             if (biometricAuth.canAuthenticate()) {
                                 biometricAuth.authenticate()
                             } else {
-                                app.initializeDatabase()
-                                app.sessionManager.onAuthenticated()
+                                sessionManager.onAuthenticated()
                             }
                         }
                     )
@@ -101,8 +108,7 @@ class MainActivity : FragmentActivity() {
                         biometricAuth.resultFlow.collect { result ->
                             when (result) {
                                 is BiometricAuth.AuthResult.Success -> {
-                                    app.initializeDatabase()
-                                    app.sessionManager.onAuthenticated()
+                                    sessionManager.onAuthenticated()
                                 }
                                 is BiometricAuth.AuthResult.Error -> {
                                 }
@@ -112,7 +118,7 @@ class MainActivity : FragmentActivity() {
                         }
                     }
                 } else {
-                    MainApp()
+                    MainApp(cardDao)
 
                     if (!notificationPermRequested && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         LaunchedEffect(Unit) {
@@ -124,24 +130,21 @@ class MainActivity : FragmentActivity() {
             }
         }
     }
-
-    private val app: CardVaultApp
-        get() = application as CardVaultApp
 }
 
 @Composable
-private fun MainApp() {
+private fun MainApp(cardDao: CardDao) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
     LaunchedEffect(Unit) {
-        val cards = CardVaultApp.instance.database.cardDao().getAllCards().first()
+        val cards = cardDao.getAllCards().first()
         val expiring = checkExpiringCards(cards)
         if (expiring.isNotEmpty()) {
             val names = expiring.joinToString(", ") { "${it.nickname} (${it.expiry})" }
             NotificationHelper.showExpiryNotification(
-                CardVaultApp.instance,
+                navController.context,
                 "Cards Expiring Soon",
                 names
             )
@@ -181,7 +184,7 @@ private data class ExpiringCard(
     val daysUntilExpiry: Int
 )
 
-private suspend fun checkExpiringCards(cards: List<Card>): List<ExpiringCard> {
+private fun checkExpiringCards(cards: List<Card>): List<ExpiringCard> {
     val now = Calendar.getInstance()
     val deadline = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, 30) }
     return cards.mapNotNull { card ->

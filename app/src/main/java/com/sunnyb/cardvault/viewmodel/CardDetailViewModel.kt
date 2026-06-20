@@ -1,26 +1,25 @@
 package com.sunnyb.cardvault.viewmodel
 
-import android.graphics.Bitmap
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.sunnyb.cardvault.CardVaultApp
+import com.sunnyb.cardvault.data.db.CardDao
+import com.sunnyb.cardvault.data.db.CategoryDao
 import com.sunnyb.cardvault.data.db.entity.Card
-import kotlinx.coroutines.Dispatchers
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import android.util.LruCache
+import javax.inject.Inject
 
-class CardDetailViewModel(
-    savedStateHandle: SavedStateHandle
+@HiltViewModel
+class CardDetailViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle,
+    private val cardDao: CardDao,
+    private val categoryDao: CategoryDao
 ) : ViewModel() {
 
-    private val cardDao = CardVaultApp.instance.database.cardDao()
-    private val categoryDao = CardVaultApp.instance.database.categoryDao()
-    private val encryptionManager = CardVaultApp.instance.encryptionManager
     private val cardId: Long = savedStateHandle["cardId"] ?: -1
 
     private val _card = MutableStateFlow<Card?>(null)
@@ -29,19 +28,11 @@ class CardDetailViewModel(
     private val _categoryName = MutableStateFlow<String?>(null)
     val categoryName: StateFlow<String?> = _categoryName.asStateFlow()
 
-    private val _backImageBitmap = MutableStateFlow<Bitmap?>(null)
-    val backImageBitmap: StateFlow<Bitmap?> = _backImageBitmap.asStateFlow()
-
-    private val _frontImageBitmap = MutableStateFlow<Bitmap?>(null)
-    val frontImageBitmap: StateFlow<Bitmap?> = _frontImageBitmap.asStateFlow()
-
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
     private val _isDeleted = MutableStateFlow(false)
     val isDeleted: StateFlow<Boolean> = _isDeleted.asStateFlow()
-
-    private val imageCache = LruCache<String, Bitmap>(10)
 
     init {
         loadCard()
@@ -59,42 +50,6 @@ class CardDetailViewModel(
             } catch (e: Exception) {
                 _error.value = "Failed to load card details"
             }
-        }
-    }
-
-    fun loadFrontImage() {
-        viewModelScope.launch {
-            val path = _card.value?.frontImagePath ?: return@launch
-            val cached = imageCache.get(path)
-            if (cached != null) {
-                _frontImageBitmap.value = cached
-                return@launch
-            }
-            val bitmap = withContext(Dispatchers.IO) {
-                encryptionManager.readEncryptedBitmap(path)
-            }
-            if (bitmap != null) {
-                imageCache.put(path, bitmap)
-            }
-            _frontImageBitmap.value = bitmap
-        }
-    }
-
-    fun loadBackImage() {
-        viewModelScope.launch {
-            val path = _card.value?.backImagePath ?: return@launch
-            val cached = imageCache.get(path)
-            if (cached != null) {
-                _backImageBitmap.value = cached
-                return@launch
-            }
-            val bitmap = withContext(Dispatchers.IO) {
-                encryptionManager.readEncryptedBitmap(path)
-            }
-            if (bitmap != null) {
-                imageCache.put(path, bitmap)
-            }
-            _backImageBitmap.value = bitmap
         }
     }
 

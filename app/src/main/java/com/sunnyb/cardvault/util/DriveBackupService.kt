@@ -1,41 +1,33 @@
 package com.sunnyb.cardvault.util
 
+import android.accounts.Account
 import android.content.Context
-import android.content.Intent
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInClient
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
 import com.google.api.client.http.ByteArrayContent
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.gson.GsonFactory
 import com.google.api.services.drive.Drive
 import com.google.api.services.drive.DriveScopes
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
+import javax.inject.Inject
+import javax.inject.Singleton
 
-object DriveBackupService {
+@Singleton
+class DriveBackupService @Inject constructor(
+    @ApplicationContext private val context: Context
+) {
 
-    private const val BACKUP_FOLDER = "CardVaultBackups"
-    private const val APP_NAME = "Card Vault"
-
-    fun getSignInClient(context: Context): GoogleSignInClient {
-        val options = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestEmail()
-            .requestScopes(com.google.android.gms.common.api.Scope(DriveScopes.DRIVE_FILE))
-            .build()
-        return GoogleSignIn.getClient(context, options)
+    companion object {
+        private const val BACKUP_FOLDER = "CardVaultBackups"
+        private const val APP_NAME = "Card Vault"
     }
 
-    fun getSignInIntent(context: Context): Intent {
-        return getSignInClient(context).signInIntent
-    }
-
-    private suspend fun getDriveService(context: Context): Drive? = withContext(Dispatchers.IO) {
-        val account = GoogleSignIn.getLastSignedInAccount(context) ?: return@withContext null
+    private suspend fun getDriveService(accountEmail: String): Drive? = withContext(Dispatchers.IO) {
         val credential = GoogleAccountCredential.usingOAuth2(context, listOf(DriveScopes.DRIVE_FILE))
-        credential.selectedAccount = account.account
+        credential.selectedAccount = Account(accountEmail, "com.google")
 
         Drive.Builder(
             NetHttpTransport(),
@@ -63,9 +55,9 @@ object DriveBackupService {
         }
     }
 
-    suspend fun uploadBackup(context: Context, jsonContent: String): Boolean = withContext(Dispatchers.IO) {
+    suspend fun uploadBackup(accountEmail: String, jsonContent: String): Boolean = withContext(Dispatchers.IO) {
         try {
-            val drive = getDriveService(context) ?: return@withContext false
+            val drive = getDriveService(accountEmail) ?: return@withContext false
             val folderId = getOrCreateBackupFolder(drive) ?: return@withContext false
 
             val dateStr = java.text.SimpleDateFormat("yyyy-MM-dd_HHmmss", java.util.Locale.US)
@@ -84,9 +76,9 @@ object DriveBackupService {
         }
     }
 
-    suspend fun listBackups(context: Context): List<com.google.api.services.drive.model.File> = withContext(Dispatchers.IO) {
+    suspend fun listBackups(accountEmail: String): List<com.google.api.services.drive.model.File> = withContext(Dispatchers.IO) {
         try {
-            val drive = getDriveService(context) ?: return@withContext emptyList()
+            val drive = getDriveService(accountEmail) ?: return@withContext emptyList()
             val folderId = getOrCreateBackupFolder(drive) ?: return@withContext emptyList()
 
             val result = drive.files().list()
@@ -100,22 +92,14 @@ object DriveBackupService {
         }
     }
 
-    suspend fun downloadBackupJson(context: Context, fileId: String): String? = withContext(Dispatchers.IO) {
+    suspend fun downloadBackupJson(accountEmail: String, fileId: String): String? = withContext(Dispatchers.IO) {
         try {
-            val drive = getDriveService(context) ?: return@withContext null
+            val drive = getDriveService(accountEmail) ?: return@withContext null
             val outputStream = ByteArrayOutputStream()
             drive.files().get(fileId).executeMediaAndDownloadTo(outputStream)
             outputStream.toString("UTF-8")
         } catch (e: Exception) {
             null
         }
-    }
-
-    fun isSignedIn(context: Context): Boolean {
-        return GoogleSignIn.getLastSignedInAccount(context) != null
-    }
-
-    fun signOut(context: Context) {
-        getSignInClient(context).signOut()
     }
 }
