@@ -447,7 +447,7 @@ fun SettingsScreen(
                 Column {
                     Text("About Card Vault", style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface)
-                    Text("Version 1.4.1 · Developer · Legal",
+                    Text("Version 1.5.0 · Developer · Legal",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
@@ -512,6 +512,22 @@ fun SettingsScreen(
                 title = { Text("What's New") },
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("v1.5.0 — June 2026", fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary)
+                        Text("•  Stripped dead code and over-engineering — smaller APK, fewer deps",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface)
+                        Text("•  Removed unused OCR scanner (manual entry only going forward)",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface)
+                        Text("•  Removed repository abstraction layer (DAOs used directly)",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface)
+
+                        Spacer(Modifier.height(12.dp))
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                        Spacer(Modifier.height(8.dp))
+
                         Text("v1.4.1 — May 2026", fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary)
                         Text("•  Manual entry — type card details yourself, no OCR",
