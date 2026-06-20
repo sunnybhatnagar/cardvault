@@ -16,7 +16,7 @@ android {
         versionCode = 7
         versionName = "1.5.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.sunnyb.cardvault.CardVaultTestRunner"
 
         vectorDrawables {
             useSupportLibrary = true
@@ -119,6 +119,7 @@ dependencies {
     implementation("net.zetetic:android-database-sqlcipher:4.5.4")
 
     debugImplementation(libs.androidx.ui.tooling)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation("com.squareup.leakcanary:leakcanary-android:2.14")
     implementation("com.jakewharton.timber:timber:5.0.1")
     testImplementation(libs.junit)
@@ -126,5 +127,10 @@ dependencies {
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.espresso.core)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.compose.ui.test)
+    androidTestImplementation(libs.androidx.activity.compose)
+    androidTestImplementation(libs.hilt.android.testing)
     androidTestImplementation("androidx.room:room-testing:2.6.1")
+    kspAndroidTest(libs.hilt.compiler)
 }

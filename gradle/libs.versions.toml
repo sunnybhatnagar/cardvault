@@ -11,10 +11,11 @@ security-crypto = "1.1.0-alpha06"
 biometric = "1.1.0"
 junit = "4.13.2"
 ext-junit = "1.1.5"
-espresso = "3.5.1"
+espresso = "3.6.1"
 core-splashscreen = "1.2.0"
 hilt = "2.51.1"
 hilt-navigation = "1.2.0"
+compose-ui-test = "1.6.7"
 credentials = "1.2.2"
 googleid = "1.1.1"
 
@@ -42,6 +43,9 @@ androidx-credentials-play-services-auth = { group = "androidx.credentials", name
 googleid = { group = "com.google.android.libraries.identity.googleid", name = "googleid", version.ref = "googleid" }
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
 hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "hilt" }
+hilt-android-testing = { group = "com.google.dagger", name = "hilt-android-testing", version.ref = "hilt" }
+androidx-compose-ui-test = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "ext-junit" }
 androidx-test-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso" }
