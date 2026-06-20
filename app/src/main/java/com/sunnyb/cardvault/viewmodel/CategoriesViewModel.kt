@@ -14,8 +14,8 @@ data class CategoryWithCount(
 
 class CategoriesViewModel : ViewModel() {
 
-    private val categoryRepository = CardVaultApp.instance.categoryRepository
-    private val cardRepository = CardVaultApp.instance.cardRepository
+    private val cardDao = CardVaultApp.instance.database.cardDao()
+    private val categoryDao = CardVaultApp.instance.database.categoryDao()
 
     private val _categories = MutableStateFlow<List<CategoryWithCount>>(emptyList())
     val categories: StateFlow<List<CategoryWithCount>> = _categories.asStateFlow()
@@ -26,9 +26,9 @@ class CategoriesViewModel : ViewModel() {
     init {
         viewModelScope.launch {
             try {
-                categoryRepository.allCategories.collect { cats ->
+                categoryDao.getAllCategories().collect { cats ->
                     val withCounts = cats.map { cat ->
-                        val count = cardRepository.getCardCountForCategory(cat.id)
+                        val count = cardDao.getCardCountForCategory(cat.id)
                         CategoryWithCount(cat, count)
                     }
                     _categories.value = withCounts
@@ -42,7 +42,7 @@ class CategoriesViewModel : ViewModel() {
     fun addCategory(name: String, icon: String) {
         viewModelScope.launch {
             try {
-                categoryRepository.insertCategory(
+                categoryDao.insertCategory(
                     Category(name = name.take(30), icon = icon)
                 )
             } catch (e: Exception) {
@@ -54,7 +54,7 @@ class CategoriesViewModel : ViewModel() {
     fun updateCategory(category: Category) {
         viewModelScope.launch {
             try {
-                categoryRepository.updateCategory(category)
+                categoryDao.updateCategory(category)
             } catch (e: Exception) {
                 _error.value = "Failed to update category"
             }
@@ -64,7 +64,7 @@ class CategoriesViewModel : ViewModel() {
     fun deleteCategory(category: Category) {
         viewModelScope.launch {
             try {
-                categoryRepository.deleteCategory(category)
+                categoryDao.deleteCategory(category)
             } catch (e: Exception) {
                 _error.value = "Failed to delete category"
             }
@@ -73,29 +73,5 @@ class CategoriesViewModel : ViewModel() {
 
     fun clearError() {
         _error.value = null
-    }
-
-    fun addCategoryWithCallback(name: String, icon: String, onSuccess: () -> Unit) {
-        viewModelScope.launch {
-            try {
-                categoryRepository.insertCategory(
-                    Category(name = name.take(30), icon = icon)
-                )
-                onSuccess()
-            } catch (e: Exception) {
-                _error.value = "Failed to add category"
-            }
-        }
-    }
-
-    fun deleteCategoryWithCallback(category: Category, onSuccess: () -> Unit) {
-        viewModelScope.launch {
-            try {
-                categoryRepository.deleteCategory(category)
-                onSuccess()
-            } catch (e: Exception) {
-                _error.value = "Failed to delete category"
-            }
-        }
     }
 }

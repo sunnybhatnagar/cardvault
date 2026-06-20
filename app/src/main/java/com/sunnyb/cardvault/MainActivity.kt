@@ -18,6 +18,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.sunnyb.cardvault.data.db.entity.Card
 import com.sunnyb.cardvault.security.BiometricAuth
 import com.sunnyb.cardvault.ui.navigation.BottomNavBar
 import com.sunnyb.cardvault.ui.navigation.NavGraph
@@ -27,9 +28,9 @@ import com.sunnyb.cardvault.ui.screens.OnboardingScreen
 import com.sunnyb.cardvault.ui.theme.CardVaultTheme
 import com.sunnyb.cardvault.ui.theme.DarkBackground
 import com.sunnyb.cardvault.ui.theme.ThemeMode
-import com.sunnyb.cardvault.util.ExpiryChecker
 import com.sunnyb.cardvault.util.NotificationHelper
 import kotlinx.coroutines.flow.first
+import java.util.Calendar
 
 class MainActivity : FragmentActivity() {
 
@@ -104,10 +105,8 @@ class MainActivity : FragmentActivity() {
                                     app.sessionManager.onAuthenticated()
                                 }
                                 is BiometricAuth.AuthResult.Error -> {
-                                    // Error already shown by system dialog; user can retry
                                 }
                                 is BiometricAuth.AuthResult.Cancelled -> {
-                                    // User dismissed — keep lock screen
                                 }
                             }
                         }
@@ -137,9 +136,8 @@ private fun MainApp() {
     val currentRoute = navBackStackEntry?.destination?.route
 
     LaunchedEffect(Unit) {
-        val repo = CardVaultApp.instance.cardRepository
-        val cards = repo.allCards.first()
-        val expiring = ExpiryChecker.check(cards)
+        val cards = CardVaultApp.instance.database.cardDao().getAllCards().first()
+        val expiring = checkExpiringCards(cards)
         if (expiring.isNotEmpty()) {
             val names = expiring.joinToString(", ") { "${it.nickname} (${it.expiry})" }
             NotificationHelper.showExpiryNotification(
@@ -174,5 +172,37 @@ private fun MainApp() {
             navController = navController,
             modifier = Modifier.padding(padding)
         )
+    }
+}
+
+private data class ExpiringCard(
+    val nickname: String,
+    val expiry: String,
+    val daysUntilExpiry: Int
+)
+
+private suspend fun checkExpiringCards(cards: List<Card>): List<ExpiringCard> {
+    val now = Calendar.getInstance()
+    val deadline = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, 30) }
+    return cards.mapNotNull { card ->
+        val expiryDate = parseExpiry(card.expiry) ?: return@mapNotNull null
+        if (expiryDate.before(deadline) && expiryDate.after(now)) {
+            val daysUntil = ((expiryDate.timeInMillis - now.timeInMillis) / (1000 * 60 * 60 * 24)).toInt()
+            ExpiringCard(card.nickname, card.expiry, daysUntil)
+        } else null
+    }
+}
+
+private fun parseExpiry(expiry: String): Calendar? {
+    val parts = expiry.split("/")
+    if (parts.size != 2) return null
+    val month = parts.getOrNull(0)?.toIntOrNull() ?: return null
+    val year = parts.getOrNull(1)?.toIntOrNull() ?: return null
+    if (month !in 1..12) return null
+    val fullYear = if (year < 100) 2000 + year else year
+    return Calendar.getInstance().apply {
+        set(fullYear, month - 1, 1)
+        add(Calendar.MONTH, 1)
+        add(Calendar.DAY_OF_YEAR, -1)
     }
 }

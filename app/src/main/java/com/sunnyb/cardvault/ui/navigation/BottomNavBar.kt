@@ -10,20 +10,16 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import com.sunnyb.cardvault.ui.theme.NeonCyan
 
-sealed class BottomNavItem(
+data class BottomNavItem(
     val route: String,
     val label: String,
     val icon: ImageVector
-) {
-    data object Home : BottomNavItem("home", "Home", Icons.Default.Home)
-    data object Categories : BottomNavItem("categories", "Categories", Icons.Default.Category)
-    data object Settings : BottomNavItem("settings", "Settings", Icons.Default.Settings)
-}
+)
 
 val bottomNavItems = listOf(
-    BottomNavItem.Home,
-    BottomNavItem.Categories,
-    BottomNavItem.Settings
+    BottomNavItem("home", "Home", Icons.Default.Home),
+    BottomNavItem("categories", "Categories", Icons.Default.Category),
+    BottomNavItem("settings", "Settings", Icons.Default.Settings)
 )
 
 @Composable

@@ -22,7 +22,7 @@ data class TimeoutOption(val label: String, val ms: Long)
 
 class SettingsViewModel : ViewModel() {
 
-    private val repository = CardVaultApp.instance.cardRepository
+    private val cardDao = CardVaultApp.instance.database.cardDao()
     private val sessionManager = CardVaultApp.instance.sessionManager
     private val encryptionManager = CardVaultApp.instance.encryptionManager
 
@@ -122,9 +122,9 @@ class SettingsViewModel : ViewModel() {
         viewModelScope.launch {
             _restoreState.value = RestoreState.Restoring
             try {
-                repository.deleteAllCards()
+                cardDao.deleteAllCards()
                 for (card in pendingCards) {
-                    repository.insertCard(card)
+                    cardDao.insertCard(card)
                 }
                 pendingCards = emptyList()
                 _restoreState.value = RestoreState.Success
@@ -147,7 +147,7 @@ class SettingsViewModel : ViewModel() {
         viewModelScope.launch {
             _exportState.value = ExportState.Exporting
             try {
-                val cards = repository.allCards.first()
+                val cards = cardDao.getAllCards().first()
                 val jsonBytes = buildBackupJson(cards).toString(2).toByteArray()
                 val encrypted = encryptionManager.encryptData(jsonBytes)
 
@@ -182,7 +182,7 @@ class SettingsViewModel : ViewModel() {
         viewModelScope.launch {
             _driveState.value = DriveState.BackingUp
             try {
-                val cards = repository.allCards.first()
+                val cards = cardDao.getAllCards().first()
                 val jsonBytes = buildBackupJson(cards).toString(2).toByteArray()
                 val encrypted = encryptionManager.encryptData(jsonBytes)
                 val b64 = android.util.Base64.encodeToString(encrypted, android.util.Base64.NO_WRAP)
@@ -230,9 +230,9 @@ class SettingsViewModel : ViewModel() {
                         updatedAt = System.currentTimeMillis()
                     ))
                 }
-                repository.deleteAllCards()
+                cardDao.deleteAllCards()
                 for (card in cards) {
-                    repository.insertCard(card)
+                    cardDao.insertCard(card)
                 }
                 _driveState.value = DriveState.Success
             } catch (e: Exception) {

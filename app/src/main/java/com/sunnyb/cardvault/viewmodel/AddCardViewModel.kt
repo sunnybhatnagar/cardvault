@@ -40,8 +40,8 @@ data class AddCardUiState(
 
 class AddCardViewModel : ViewModel() {
 
-    private val cardRepository = CardVaultApp.instance.cardRepository
-    private val categoryRepository = CardVaultApp.instance.categoryRepository
+    private val cardDao = CardVaultApp.instance.database.cardDao()
+    private val categoryDao = CardVaultApp.instance.database.categoryDao()
     private val encryptionManager = CardVaultApp.instance.encryptionManager
     private val appContext = CardVaultApp.instance
 
@@ -59,7 +59,7 @@ class AddCardViewModel : ViewModel() {
     init {
         viewModelScope.launch {
             try {
-                categoryRepository.allCategories.collect { categories ->
+                categoryDao.getAllCategories().collect { categories ->
                     _state.update { it.copy(categories = categories) }
                 }
             } catch (e: Exception) {
@@ -72,7 +72,7 @@ class AddCardViewModel : ViewModel() {
         editCardId = cardId
         viewModelScope.launch {
             try {
-                val card = cardRepository.getCardById(cardId) ?: return@launch
+                val card = cardDao.getCardById(cardId) ?: return@launch
                 _state.update {
                     it.copy(
                         step = 3,
@@ -136,7 +136,7 @@ class AddCardViewModel : ViewModel() {
         _state.update { it.copy(cardNumber = digitsOnly, cardNumberError = error) }
         if (digitsOnly.length >= 13 && error == null) {
             viewModelScope.launch {
-                val existing = cardRepository.getCardByCardNumber(digitsOnly)
+                val existing = cardDao.getCardByCardNumber(digitsOnly)
                 if (existing != null && existing.id != editCardId) {
                     _state.update { it.copy(cardNumberError = "Card already saved as \"${existing.nickname}\"") }
                 }
@@ -175,7 +175,7 @@ class AddCardViewModel : ViewModel() {
             _state.update { it.copy(isSaving = true) }
 
             try {
-                val existing = cardRepository.getCardByCardNumber(s.cardNumber)
+                val existing = cardDao.getCardByCardNumber(s.cardNumber)
                 if (s.cardNumber.isNotBlank() && existing != null && existing.id != editCardId) {
                     _state.update { it.copy(isSaving = false, cardNumberError = "Card already saved as \"${existing.nickname}\"") }
                     return@launch
@@ -195,10 +195,10 @@ class AddCardViewModel : ViewModel() {
                 )
 
                 if (editCardId != null) {
-                    cardRepository.updateCard(card.copy(id = editCardId!!))
+                    cardDao.updateCard(card.copy(id = editCardId!!))
                     copyImagesToEncrypted(editCardId!!, s.frontImageUri, s.backImageUri)
                 } else {
-                    val newId = cardRepository.insertCard(card)
+                    val newId = cardDao.insertCard(card)
                     copyImagesToEncrypted(newId, s.frontImageUri, s.backImageUri)
                 }
 
@@ -250,11 +250,11 @@ class AddCardViewModel : ViewModel() {
                         }
                     }
 
-                    val existing = cardRepository.getCardById(cardId)
+                    val existing = cardDao.getCardById(cardId)
                     if (existing != null) {
                         val updated = if (suffix == "front") existing.copy(frontImagePath = file.absolutePath)
                         else existing.copy(backImagePath = file.absolutePath)
-                        cardRepository.updateCard(updated)
+                        cardDao.updateCard(updated)
                     }
                 } catch (e: Exception) {
                     throw Exception("Failed to process card image", e)

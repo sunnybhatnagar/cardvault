@@ -37,8 +37,6 @@ import coil.compose.AsyncImage
 import com.sunnyb.cardvault.ui.theme.*
 import com.sunnyb.cardvault.util.CardNumberTransformation
 import com.sunnyb.cardvault.util.ExpiryTransformation
-import com.sunnyb.cardvault.util.PermissionAction
-import com.sunnyb.cardvault.util.getPermissionAction
 import com.sunnyb.cardvault.viewmodel.AddCardViewModel
 import java.io.File
 
@@ -381,8 +379,8 @@ private fun StepPhotoCapture(
                     val shouldRationale = (context as? androidx.activity.ComponentActivity)
                         ?.shouldShowRequestPermissionRationale(Manifest.permission.CAMERA) ?: false
 
-                    when (getPermissionAction(isGranted, shouldRationale)) {
-                        PermissionAction.LAUNCH_CAMERA -> {
+                    when {
+                        isGranted -> {
                             val file = File.createTempFile("card_", ".jpg", context.cacheDir)
                             val uri = FileProvider.getUriForFile(
                                 context, "${context.packageName}.fileprovider", file
@@ -390,8 +388,8 @@ private fun StepPhotoCapture(
                             tempImageUri = uri
                             cameraLauncher.launch(uri)
                         }
-                        PermissionAction.SHOW_RATIONALE -> showRationale = true
-                        PermissionAction.SHOW_SETTINGS_PROMPT -> showSettingsPrompt = true
+                        shouldRationale -> showRationale = true
+                        else -> showSettingsPrompt = true
                     }
                 },
             contentAlignment = Alignment.Center

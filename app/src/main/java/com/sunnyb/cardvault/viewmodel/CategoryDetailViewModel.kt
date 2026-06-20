@@ -10,8 +10,8 @@ import kotlinx.coroutines.launch
 
 class CategoryDetailViewModel : ViewModel() {
 
-    private val categoryRepository = CardVaultApp.instance.categoryRepository
-    private val cardRepository = CardVaultApp.instance.cardRepository
+    private val cardDao = CardVaultApp.instance.database.cardDao()
+    private val categoryDao = CardVaultApp.instance.database.categoryDao()
 
     private val _category = MutableStateFlow<Category?>(null)
     val category: StateFlow<Category?> = _category.asStateFlow()
@@ -28,9 +28,9 @@ class CategoryDetailViewModel : ViewModel() {
     fun loadCategory(categoryId: Long) {
         viewModelScope.launch {
             try {
-                _category.value = categoryRepository.getCategoryById(categoryId)
+                _category.value = categoryDao.getCategoryById(categoryId)
 
-                cardRepository.getCardsByCategory(categoryId).collect { cardList ->
+                cardDao.getCardsByCategory(categoryId).collect { cardList ->
                     _cards.value = cardList
                 }
             } catch (e: Exception) {
@@ -42,7 +42,7 @@ class CategoryDetailViewModel : ViewModel() {
     fun updateCategory(category: Category) {
         viewModelScope.launch {
             try {
-                categoryRepository.updateCategory(category)
+                categoryDao.updateCategory(category)
                 _category.value = category
             } catch (e: Exception) {
                 _error.value = "Failed to update category"
@@ -53,7 +53,7 @@ class CategoryDetailViewModel : ViewModel() {
     fun deleteCategory() {
         viewModelScope.launch {
             try {
-                _category.value?.let { categoryRepository.deleteCategory(it) }
+                _category.value?.let { categoryDao.deleteCategory(it) }
                 _isDeleted.value = true
             } catch (e: Exception) {
                 _error.value = "Failed to delete category"

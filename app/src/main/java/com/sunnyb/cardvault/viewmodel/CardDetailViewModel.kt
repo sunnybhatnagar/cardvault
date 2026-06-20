@@ -18,8 +18,8 @@ class CardDetailViewModel(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    private val repository = CardVaultApp.instance.cardRepository
-    private val categoryRepository = CardVaultApp.instance.categoryRepository
+    private val cardDao = CardVaultApp.instance.database.cardDao()
+    private val categoryDao = CardVaultApp.instance.database.categoryDao()
     private val encryptionManager = CardVaultApp.instance.encryptionManager
     private val cardId: Long = savedStateHandle["cardId"] ?: -1
 
@@ -50,10 +50,10 @@ class CardDetailViewModel(
     private fun loadCard() {
         viewModelScope.launch {
             try {
-                val c = repository.getCardById(cardId)
+                val c = cardDao.getCardById(cardId)
                 _card.value = c
                 if (c?.categoryId != null) {
-                    val cat = categoryRepository.getCategoryById(c.categoryId)
+                    val cat = categoryDao.getCategoryById(c.categoryId)
                     _categoryName.value = cat?.name
                 }
             } catch (e: Exception) {
@@ -101,7 +101,7 @@ class CardDetailViewModel(
     fun deleteCard() {
         viewModelScope.launch {
             try {
-                _card.value?.let { repository.deleteCard(it) }
+                _card.value?.let { cardDao.deleteCard(it) }
                 _isDeleted.value = true
             } catch (e: Exception) {
                 _error.value = "Failed to delete card"

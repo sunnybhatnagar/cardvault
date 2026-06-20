@@ -1,19 +1,21 @@
 package com.sunnyb.cardvault
 
 import android.app.Application
+import android.content.Context
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.room.Room
+import androidx.room.RoomDatabase
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.sunnyb.cardvault.data.db.AppDatabase
-import com.sunnyb.cardvault.data.db.DatabaseFactory
-import com.sunnyb.cardvault.data.repository.CardRepository
-import com.sunnyb.cardvault.data.repository.CategoryRepository
 import com.sunnyb.cardvault.security.EncryptionManager
 import com.sunnyb.cardvault.security.SessionManager
 import com.sunnyb.cardvault.ui.theme.ThemeMode
 import com.sunnyb.cardvault.util.NotificationHelper
 import com.sunnyb.cardvault.util.RootDetector
 import com.sunnyb.cardvault.util.SafeLoggingTree
+import net.sqlcipher.database.SupportFactory
 import timber.log.Timber
 import java.io.File
 
@@ -21,8 +23,6 @@ class CardVaultApp : Application() {
 
     lateinit var encryptionManager: EncryptionManager
     lateinit var database: AppDatabase
-    lateinit var cardRepository: CardRepository
-    lateinit var categoryRepository: CategoryRepository
     lateinit var sessionManager: SessionManager
     var themeMode by mutableStateOf(ThemeMode.DARK)
     var isDeviceRooted: Boolean = false
@@ -50,9 +50,7 @@ class CardVaultApp : Application() {
         _initialized = true
         try {
             val passphrase = encryptionManager.getDatabasePassphrase()
-            database = DatabaseFactory.create(this, passphrase)
-            cardRepository = CardRepository(database.cardDao())
-            categoryRepository = CategoryRepository(database.categoryDao())
+            database = createDatabase(this, passphrase)
         } catch (e: Exception) {
             Timber.e(e, "Database initialization failed — attempting recovery")
             deleteDatabase("cardvault.db")
@@ -61,9 +59,31 @@ class CardVaultApp : Application() {
             File(applicationContext.filesDir, "cardvault.db-wal").delete()
 
             val passphrase = encryptionManager.getDatabasePassphrase()
-            database = DatabaseFactory.create(this, passphrase)
-            cardRepository = CardRepository(database.cardDao())
-            categoryRepository = CategoryRepository(database.categoryDao())
+            database = createDatabase(this, passphrase)
+        }
+    }
+
+    private fun createDatabase(context: Context, passphrase: ByteArray): AppDatabase {
+        val factory = SupportFactory(passphrase)
+        return Room.databaseBuilder(
+            context.applicationContext,
+            AppDatabase::class.java,
+            "cardvault.db"
+        )
+            .openHelperFactory(factory)
+            .addMigrations(AppDatabase.MIGRATION_1_2)
+            .addCallback(seedCategories())
+            .build()
+    }
+
+    private fun seedCategories() = object : RoomDatabase.Callback() {
+        override fun onCreate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "INSERT INTO category (name, icon, sortOrder) VALUES " +
+                "('Personal', '👤', 1), " +
+                "('Work', '💼', 2), " +
+                "('Other', '📁', 3)"
+            )
         }
     }
 

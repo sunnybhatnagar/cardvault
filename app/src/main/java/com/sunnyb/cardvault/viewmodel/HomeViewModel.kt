@@ -12,7 +12,7 @@ enum class ViewMode { GRID, LIST }
 
 class HomeViewModel : ViewModel() {
 
-    private val repository = CardVaultApp.instance.cardRepository
+    private val cardDao = CardVaultApp.instance.database.cardDao()
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
@@ -26,8 +26,8 @@ class HomeViewModel : ViewModel() {
     @OptIn(ExperimentalCoroutinesApi::class)
     val cards: StateFlow<List<Card>> = _searchQuery
         .flatMapLatest { query ->
-            if (query.isBlank()) repository.allCards
-            else repository.searchCards(query)
+            if (query.isBlank()) cardDao.getAllCards()
+            else cardDao.searchCards(query)
         }
         .onEach { _isLoading.value = false }
         .catch {
@@ -40,19 +40,12 @@ class HomeViewModel : ViewModel() {
     private val _viewMode = MutableStateFlow(ViewMode.GRID)
     val viewMode: StateFlow<ViewMode> = _viewMode.asStateFlow()
 
-    private val _selectedCategoryId = MutableStateFlow<Long?>(null)
-    val selectedCategoryId: StateFlow<Long?> = _selectedCategoryId.asStateFlow()
-
     fun setViewMode(mode: ViewMode) {
         _viewMode.value = mode
     }
 
     fun onSearchQueryChange(query: String) {
         _searchQuery.value = query
-    }
-
-    fun filterByCategory(categoryId: Long?) {
-        _selectedCategoryId.value = categoryId
     }
 
     fun clearError() {

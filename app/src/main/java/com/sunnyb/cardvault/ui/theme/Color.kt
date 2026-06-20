@@ -13,7 +13,6 @@ val LightSurfaceVariant = Color(0xFFE8E8F0)
 val NeonCyan = Color(0xFF00BBBB)
 val NeonMagenta = Color(0xFFDD00DD)
 val NeonGreen = Color(0xFF00CC77)
-val NeonOrange = Color(0xFFFF6600)
 
 val GradientChase = listOf(Color(0xFF0F0C29), Color(0xFF302B63), Color(0xFF24243E))
 val GradientAmex = listOf(Color(0xFF1A0A2E), Color(0xFF2D1B69), Color(0xFF11998E))
